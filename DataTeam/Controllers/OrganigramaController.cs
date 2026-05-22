@@ -26,6 +26,8 @@ public class OrganigramaController : Controller
 
         var celulas = await _context.Celulas
             .Include(c => c.Consultores)
+            .Include(c => c.CelulaLideres)
+                .ThenInclude(cl => cl.Consultor)
             .Where(c => c.Activa)
             .OrderBy(c => c.Nombre)
             .ToListAsync();
@@ -40,11 +42,23 @@ public class OrganigramaController : Controller
                 Color = celula.Color ?? "#3498db"
             };
 
-            // Buscar líder si existe
-            if (celula.LiderConsultorId.HasValue)
+            // Buscar líder principal si existe
+            var liderPrincipal = celula.CelulaLideres
+                .Where(cl => cl.EsLiderPrincipal)
+                .Select(cl => cl.Consultor)
+                .FirstOrDefault();
+
+            if (liderPrincipal != null)
             {
-                var lider = celula.Consultores.FirstOrDefault(c => c.Id == celula.LiderConsultorId.Value);
-                celulaVm.NombreLider = lider?.Nombre;
+                celulaVm.NombreLider = liderPrincipal.Nombre;
+            }
+            else
+            {
+                // Si no hay líder principal, tomar el primer líder asignado
+                var primerLider = celula.CelulaLideres
+                    .Select(cl => cl.Consultor)
+                    .FirstOrDefault();
+                celulaVm.NombreLider = primerLider?.Nombre;
             }
 
             // Agregar consultores activos

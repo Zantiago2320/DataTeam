@@ -1,11 +1,452 @@
+/* ========================================
+   TEMA DE COLORES: AMARILLO - VERDE - BLANCO
+   ======================================== */
+:root {
+  /* Colores principales */
+  --color-verde-principal: #28a745;
+  --color-verde-oscuro: #218838;
+  --color-verde-claro: #5cb85c;
+  --color-verde-hover: #1e7e34;
+
+  --color-amarillo-principal: #ffc107;
+  --color-amarillo-oscuro: #e0a800;
+  --color-amarillo-claro: #ffce3a;
+  --color-amarillo-hover: #d39e00;
+
+  --color-blanco: #ffffff;
+  --color-gris-claro: #f8f9fa;
+  --color-gris-medio: #e9ecef;
+  --color-gris-oscuro: #6c757d;
+
+  /* Estados y acciones */
+  --color-exito: var(--color-verde-principal);
+  --color-advertencia: var(--color-amarillo-principal);
+  --color-peligro: #dc3545;
+  --color-info: #17a2b8;
+
+  /* Texto */
+  --color-texto-principal: #212529;
+  --color-texto-secundario: #6c757d;
+  --color-texto-sobre-verde: #ffffff;
+  --color-texto-sobre-amarillo: #212529;
+}
+
+/* Botones personalizados */
+.btn-primary {
+  background-color: var(--color-verde-principal) !important;
+  border-color: var(--color-verde-principal) !important;
+  color: var(--color-blanco) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-verde-hover) !important;
+  border-color: var(--color-verde-hover) !important;
+}
+
+.btn-warning {
+  background-color: var(--color-amarillo-principal) !important;
+  border-color: var(--color-amarillo-principal) !important;
+  color: var(--color-texto-sobre-amarillo) !important;
+}
+
+.btn-warning:hover {
+  background-color: var(--color-amarillo-hover) !important;
+  border-color: var(--color-amarillo-hover) !important;
+}
+
+.btn-success {
+  background-color: var(--color-verde-claro) !important;
+  border-color: var(--color-verde-claro) !important;
+}
+
+/* Headers de cards */
+.card-header.bg-primary {
+  background-color: var(--color-verde-principal) !important;
+  color: var(--color-blanco) !important;
+}
+
+.card-header.bg-warning {
+  background-color: var(--color-amarillo-principal) !important;
+  color: var(--color-texto-sobre-amarillo) !important;
+}
+
+/* Badges personalizados */
+.badge.bg-success {
+  background-color: var(--color-verde-principal) !important;
+}
+
+.badge.bg-warning {
+  background-color: var(--color-amarillo-principal) !important;
+  color: var(--color-texto-sobre-amarillo) !important;
+}
+
+/* Enlaces */
+a {
+  color: var(--color-verde-oscuro);
+}
+
+a:hover {
+  color: var(--color-verde-hover);
+}
+
 html {
-  font-size: 14px;
+  font-size: 17px; /* Base aumentada para mejor legibilidad */
 }
 
 @media (min-width: 768px) {
   html {
-    font-size: 16px;
+    font-size: 18px; /* Tablets y superiores */
   }
+}
+
+@media (min-width: 1200px) {
+  html {
+    font-size: 19px; /* Pantallas grandes */
+  }
+}
+
+/* Estilos globales para texto más grande y legible */
+body {
+  font-size: 1.15rem; /* Aumentado para mejor legibilidad */
+  line-height: 1.7;
+  font-weight: 400;
+  background-color: #f5f5f5;
+  color: #000;
+}
+
+/* Párrafos más legibles */
+p {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+}
+
+/* Tablas con texto más grande */
+table {
+  font-size: 1.05rem;
+}
+
+/* Labels y formularios */
+label {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+input, select, textarea {
+  font-size: 1.05rem !important;
+}
+
+/* Títulos más grandes y legibles */
+h1, .h1 {
+  font-size: 3.2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #000;
+}
+
+h2, .h2 {
+  font-size: 2.6rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: #000;
+}
+
+h3, .h3 {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #000;
+}
+
+h4, .h4 {
+  font-size: 1.85rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: #000;
+}
+
+h5, .h5 {
+  font-size: 1.6rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #000;
+}
+
+/* Botones más grandes y legibles - Tema Negro */
+.btn {
+  font-size: 1.15rem;
+  padding: 0.65rem 1.5rem;
+  font-weight: 500;
+}
+
+.btn-primary {
+  background-color: #000 !important;
+  border-color: #000 !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: #333 !important;
+  border-color: #333 !important;
+}
+
+.btn-secondary {
+  background-color: #666 !important;
+  border-color: #666 !important;
+  color: #fff !important;
+}
+
+.btn-secondary:hover {
+  background-color: #888 !important;
+  border-color: #888 !important;
+}
+
+.btn-success {
+  background-color: #000 !important;
+  border-color: #000 !important;
+}
+
+.btn-success:hover {
+  background-color: #333 !important;
+  border-color: #333 !important;
+}
+
+.btn-danger {
+  background-color: #333 !important;
+  border-color: #333 !important;
+}
+
+.btn-danger:hover {
+  background-color: #555 !important;
+  border-color: #555 !important;
+}
+
+.btn-warning {
+  background-color: #666 !important;
+  border-color: #666 !important;
+  color: #fff !important;
+}
+
+.btn-warning:hover {
+  background-color: #888 !important;
+  border-color: #888 !important;
+}
+
+.btn-sm {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+}
+
+.btn-lg {
+  font-size: 1.35rem;
+  padding: 0.85rem 2rem;
+}
+
+/* Foto de perfil en navbar */
+.navbar .dropdown-toggle img {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 2px solid #fff;
+}
+
+.navbar .dropdown-toggle:hover img {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+
+/* Dropdown de usuario mejorado */
+.dropdown-menu {
+  border-radius: 12px;
+  border: 2px solid #000;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+}
+
+.dropdown-item {
+  padding: 0.75rem 1.25rem;
+  transition: all 0.2s ease;
+  color: #000;
+}
+
+.dropdown-item:hover {
+  background-color: #f0f0f0;
+  transform: translateX(5px);
+  color: #000;
+}
+
+/* Cards con texto más legible y tema blanco/negro */
+.card {
+  border: 2px solid #ddd;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.card-text {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.card-header {
+  background-color: #000;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Badges tema blanco/negro */
+.badge {
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+}
+
+.badge-primary {
+  background-color: #000 !important;
+}
+
+.badge-secondary {
+  background-color: #666 !important;
+}
+
+.badge-success {
+  background-color: #333 !important;
+}
+
+/* Tablas mejoradas */
+.table {
+  font-size: 1.05rem;
+}
+
+.table th {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 1rem;
+  background-color: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.table td {
+  padding: 0.9rem;
+  border-color: #ddd;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: #f8f8f8;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #e8e8e8;
+}
+
+/* Footer */
+.footer {
+  background-color: #f8f9fa;
+  border-top: 2px solid #ddd;
+  color: #666;
+}
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-lg {
+  font-size: 1.3rem;
+  padding: 1rem 2rem;
+}
+
+/* Formularios más grandes */
+.form-control, .form-select {
+  font-size: 1.1rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  color: #000;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #000;
+  box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.15);
+}
+
+.form-control-lg, .form-select-lg {
+  font-size: 1.3rem;
+  padding: 1rem 1.25rem;
+}
+
+.form-label {
+  font-size: 1.15rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  color: #000;
+}
+
+/* Tablas más legibles - Ya modificadas arriba */
+
+/* Navegación más grande */
+.navbar {
+  font-size: 1.15rem;
+}
+
+.navbar-brand {
+  font-size: 1.75rem !important;
+}
+
+.nav-link {
+  font-size: 1.15rem !important;
+}
+
+/* Alertas más visibles */
+.alert {
+  font-size: 1.15rem;
+  padding: 1.25rem;
+  border: 2px solid;
+}
+
+.alert-success {
+  background-color: #f0f0f0;
+  border-color: #000;
+  color: #000;
+}
+
+.alert-danger {
+  background-color: #f8f8f8;
+  border-color: #333;
+  color: #333;
+}
+
+.alert-warning {
+  background-color: #f5f5f5;
+  border-color: #666;
+  color: #666;
+}
+
+.alert-info {
+  background-color: #fafafa;
+  border-color: #999;
+  color: #333;
+}
+
+/* Paginación más grande y tema blanco/negro */
+.pagination {
+  font-size: 1.1rem;
+}
+
+.page-link {
+  padding: 0.75rem 1rem;
+  color: #000;
+  border: 2px solid #ddd;
+}
+
+.page-link:hover {
+  background-color: #f0f0f0;
+  border-color: #000;
+  color: #000;
+}
+
+.page-item.active .page-link {
+  background-color: #000;
+  border-color: #000;
+  color: #fff;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
@@ -28,4 +469,5 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
 }

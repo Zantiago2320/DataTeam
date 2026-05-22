@@ -1,0 +1,130 @@
+@{
+    ViewData["Title"] = "Asignar Miembro a Célula";
+    var celulaId = ViewBag.CelulaId;
+    var celulaNombre = ViewBag.CelulaNombre;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus me-2"></i>Asignar Miembro a Célula
+                    </h4>
+                    <p class="text-muted mb-0 mt-2">Célula: <strong>@celulaNombre</strong></p>
+                </div>
+                <div class="card-body">
+                    <form asp-action="AsignarMiembro" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="celulaId" value="@celulaId" />
+
+                        <div class="mb-3">
+                            <label for="consultorId" class="form-label">
+                                <i class="bi bi-person"></i> Seleccionar Consultor <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="consultorId" name="consultorId" required>
+                                <option value="">-- Seleccione un consultor --</option>
+                                @if (ViewBag.ConsultoresDisponibles != null)
+                                {
+                                    @foreach (var item in ViewBag.ConsultoresDisponibles as SelectList)
+                                    {
+                                        <option value="@item.Value">@item.Text</option>
+                                    }
+                                }
+                            </select>
+                            <div class="form-text">
+                                Solo se muestran consultores activos que aún no están asignados a esta célula.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rol" class="form-label">
+                                <i class="bi bi-tag"></i> Rol en la Célula <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="rol" 
+                                   name="rol" 
+                                   placeholder="Ej: Desarrollador, Analista, Tester, Scrum Master, etc." 
+                                   maxlength="100" 
+                                   required />
+                            <div class="form-text">
+                                Especifique el rol que desempeñará este consultor en la célula.
+                            </div>
+                        </div>
+
+                        @if (TempData["Error"] != null)
+                        {
+                            <div class="alert alert-danger" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                @TempData["Error"]
+                            </div>
+                        }
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a asp-action="Details" asp-route-id="@celulaId" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Asignar Miembro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Panel de ayuda -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Información sobre Roles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2"><strong>Ejemplos de roles comunes en células:</strong></p>
+                    <ul class="mb-0">
+                        <li><strong>Desarrollador Backend:</strong> Encargado del desarrollo del lado del servidor</li>
+                        <li><strong>Desarrollador Frontend:</strong> Encargado de la interfaz de usuario</li>
+                        <li><strong>Desarrollador Full Stack:</strong> Trabaja en ambos lados</li>
+                        <li><strong>QA/Tester:</strong> Responsable de pruebas y calidad</li>
+                        <li><strong>Analista:</strong> Análisis de requerimientos y documentación</li>
+                        <li><strong>DevOps:</strong> Automatización y despliegue</li>
+                        <li><strong>Scrum Master:</strong> Facilitador del equipo ágil</li>
+                        <li><strong>Product Owner:</strong> Dueño del producto</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: 1px solid #dee2e6;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .form-select, .form-control {
+        border: 1px solid #ced4da;
+    }
+
+    .form-select:focus, .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13,110,253,.25);
+    }
+
+    .btn {
+        font-weight: 500;
+    }
+</style>

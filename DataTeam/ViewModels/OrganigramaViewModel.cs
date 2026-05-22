@@ -26,4 +26,5 @@ public class ConsultorResumen
     public string Correo { get; set; } = string.Empty;
     public string? Rol { get; set; }
     public EstadoConsultor Estado { get; set; }
+    public int Capacidad { get; set; }
 }

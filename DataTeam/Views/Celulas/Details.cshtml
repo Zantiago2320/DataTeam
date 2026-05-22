@@ -1,0 +1,221 @@
+@model DataTeam.Models.Celula
+
+@{
+    ViewData["Title"] = "Detalle de Célula";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-diagram-3-fill me-2"></i>@Model.Nombre
+                    </h4>
+                    <div>
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Editar
+                        </a>
+                        <a asp-action="Index" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Nombre:</dt>
+                                <dd class="col-sm-8">@Model.Nombre</dd>
+
+                                <dt class="col-sm-4">Descripción:</dt>
+                                <dd class="col-sm-8">@(Model.Descripcion ?? "N/A")</dd>
+
+                                <dt class="col-sm-4">Estado:</dt>
+                                <dd class="col-sm-8">
+                                    @if (Model.Activa)
+                                    {
+                                        <span class="badge bg-success">Activa</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactiva</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="col-md-6">
+                            <dl class="row">
+                                <dt class="col-sm-4">Fecha Creación:</dt>
+                                <dd class="col-sm-8">@Model.FechaCreacion.ToString("dd/MM/yyyy")</dd>
+
+                                @if (Model.FechaModificacion.HasValue)
+                                {
+                                    <dt class="col-sm-4">Última Modificación:</dt>
+                                    <dd class="col-sm-8">@Model.FechaModificacion.Value.ToString("dd/MM/yyyy")</dd>
+                                }
+
+                                <dt class="col-sm-4">Color:</dt>
+                                <dd class="col-sm-8">
+                                    @if (!string.IsNullOrEmpty(Model.Color))
+                                    {
+                                        <span class="badge" style="background-color: @Model.Color; color: white;">@Model.Color</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">N/A</span>
+                                    }
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Miembros -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-people-fill me-2"></i>Miembros de la Célula
+                    </h5>
+                    <a asp-action="AsignarMiembro" asp-route-id="@Model.Id" class="btn btn-primary btn-sm">
+                        <i class="bi bi-person-plus"></i> Asignar Miembro
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (Model.CelulaMiembros.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Cédula</th>
+                                        <th>Correo</th>
+                                        <th>Rol en la Célula</th>
+                                        <th>Fecha Asignación</th>
+                                        <th class="text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var miembro in Model.CelulaMiembros.OrderBy(m => m.Consultor?.Nombre))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@miembro.Consultor?.Nombre</strong>
+                                            </td>
+                                            <td>@miembro.Consultor?.Cedula</td>
+                                            <td>
+                                                <a href="mailto:@miembro.Consultor?.Correo">@miembro.Consultor?.Correo</a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">@miembro.Rol</span>
+                                            </td>
+                                            <td>@miembro.FechaAsignacion.ToString("dd/MM/yyyy")</td>
+                                            <td class="text-center">
+                                                <form asp-action="RemoverMiembro" method="post" class="d-inline" 
+                                                      onsubmit="return confirm('¿Está seguro de remover a @miembro.Consultor?.Nombre de esta célula?');">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@miembro.Id" />
+                                                    <input type="hidden" name="celulaId" value="@Model.Id" />
+                                                    <button type="submit" class="btn btn-danger btn-sm">
+                                                        <i class="bi bi-trash"></i> Remover
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            No hay miembros asignados a esta célula. Haga clic en "Asignar Miembro" para agregar consultores.
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Líderes (si existen) -->
+    @if (Model.CelulaLideres.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-star-fill me-2"></i>Líderes de la Célula
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Correo</th>
+                                        <th>Líder Principal</th>
+                                        <th>Fecha Asignación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var lider in Model.CelulaLideres.OrderByDescending(l => l.EsLiderPrincipal))
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@lider.Consultor?.Nombre</strong>
+                                                @if (lider.EsLiderPrincipal)
+                                                {
+                                                    <span class="badge bg-warning text-dark ms-2">Principal</span>
+                                                }
+                                            </td>
+                                            <td>@lider.Consultor?.Correo</td>
+                                            <td>
+                                                @if (lider.EsLiderPrincipal)
+                                                {
+                                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="bi bi-dash-circle text-muted"></i>
+                                                }
+                                            </td>
+                                            <td>@lider.FechaAsignacion.ToString("dd/MM/yyyy")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            alert('@TempData["Success"]');
+        });
+    </script>
+}
+
+@if (TempData["Error"] != null)
+{
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            alert('@TempData["Error"]');
+        });
+    </script>
+}

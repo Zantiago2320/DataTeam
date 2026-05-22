@@ -1,0 +1,339 @@
+@{
+    ViewData["Title"] = "Demo de Mejoras UI/UX";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4 text-primary">
+        <i class="bi bi-palette-fill me-3"></i>
+        Demo de Mejoras UI/UX
+    </h1>
+
+    <div class="alert alert-info shadow-sm" role="alert">
+        <h4 class="alert-heading">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Bienvenido a la Demostración
+        </h4>
+        <p>Esta página muestra todas las mejoras de <strong>legibilidad</strong> y <strong>foto de perfil</strong> implementadas.</p>
+        <hr>
+        <p class="mb-0">
+            <strong>Observa:</strong> El texto es más grande, los iconos más visibles, y tu foto de perfil aparece en la esquina superior derecha.
+        </p>
+    </div>
+
+    <!-- Sección de Tipografía -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-type me-2"></i>
+                Tipografía Mejorada
+            </h3>
+        </div>
+        <div class="card-body">
+            <h1>Título H1 - 3.2rem</h1>
+            <h2>Título H2 - 2.6rem</h2>
+            <h3>Título H3 - 2.2rem</h3>
+            <h4>Título H4 - 1.85rem</h4>
+            <h5>Título H5 - 1.6rem</h5>
+
+            <hr>
+
+            <p>
+                Este es un párrafo normal con tamaño de fuente <strong>1.1rem</strong>. 
+                El texto es significativamente más legible que antes gracias al aumento de tamaño 
+                y el espaciado mejorado (line-height 1.7).
+            </p>
+
+            <p class="text-muted">
+                Incluso el texto secundario es más fácil de leer. Todas las fuentes han sido 
+                aumentadas en un 15-25% para mejor accesibilidad.
+            </p>
+        </div>
+    </div>
+
+    <!-- Sección de Botones -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-hand-index-thumb me-2"></i>
+                Botones Más Grandes
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <button class="btn btn-primary btn-lg w-100">
+                        <i class="bi bi-star-fill me-2"></i>
+                        Botón Grande
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100">
+                        <i class="bi bi-check-circle-fill me-2"></i>
+                        Botón Normal
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-warning btn-sm w-100">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Botón Pequeño
+                    </button>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary">
+                    <i class="bi bi-heart-fill me-2"></i>
+                    Outline Primary
+                </button>
+                <button class="btn btn-outline-secondary">
+                    <i class="bi bi-bookmark-fill me-2"></i>
+                    Outline Secondary
+                </button>
+                <button class="btn btn-outline-danger">
+                    <i class="bi bi-trash-fill me-2"></i>
+                    Outline Danger
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Iconos -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-warning text-dark">
+            <h3 class="mb-0">
+                <i class="bi bi-emoji-smile me-2"></i>
+                Iconos Aumentados
+            </h3>
+        </div>
+        <div class="card-body">
+            <p>Los iconos del menú ahora usan <code>fs-4</code> (~1.5rem):</p>
+            <div class="d-flex gap-4 flex-wrap justify-content-center fs-4">
+                <i class="bi bi-house-door-fill text-primary"></i>
+                <i class="bi bi-database-fill text-success"></i>
+                <i class="bi bi-people-fill text-info"></i>
+                <i class="bi bi-diagram-3-fill text-warning"></i>
+                <i class="bi bi-person-plus-fill text-danger"></i>
+                <i class="bi bi-clock-history text-secondary"></i>
+                <i class="bi bi-archive text-dark"></i>
+                <i class="bi bi-calendar-check text-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Foto de Perfil -->
+    <div class="card mb-4 shadow border-primary">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-person-circle me-2"></i>
+                Foto de Perfil
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Ubicación</h5>
+                    <p>
+                        Tu foto de perfil ahora aparece en la <strong>esquina superior derecha</strong> 
+                        del menú de navegación, junto a tu nombre completo.
+                    </p>
+
+                    <h5 class="mt-4">Características</h5>
+                    <ul>
+                        <li>Foto circular de 40x40 px</li>
+                        <li>Nombre completo del usuario</li>
+                        <li>Avatar por defecto si no hay foto</li>
+                        <li>Efecto hover con zoom</li>
+                    </ul>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="bg-light p-4 rounded">
+                        <p class="text-muted mb-3">Vista previa del avatar por defecto:</p>
+                        <img src="/images/default-avatar.svg" 
+                             alt="Avatar por defecto" 
+                             class="rounded-circle border border-3 border-primary shadow"
+                             style="width: 120px; height: 120px;">
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="alert alert-success" role="alert">
+                <h5 class="alert-heading">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    ¿Cómo se Obtiene la Foto?
+                </h5>
+                <p class="mb-0">
+                    El sistema busca tu correo electrónico en la tabla de <strong>Consultores</strong> 
+                    y muestra la foto asociada. Si no hay foto, se usa el avatar por defecto con 
+                    el gradiente morado de DataTeam.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Tabla -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-info text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-table me-2"></i>
+                Tabla con Texto Legible
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Elemento</th>
+                            <th>Antes</th>
+                            <th>Después</th>
+                            <th>Mejora</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Body Font</strong></td>
+                            <td>1.0rem</td>
+                            <td>1.15rem</td>
+                            <td><span class="badge bg-success">+15%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>H1</strong></td>
+                            <td>2.5rem</td>
+                            <td>3.2rem</td>
+                            <td><span class="badge bg-success">+28%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Botones</strong></td>
+                            <td>1.0rem</td>
+                            <td>1.15rem</td>
+                            <td><span class="badge bg-success">+15%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Menú</strong></td>
+                            <td>sin especificar</td>
+                            <td>1.25rem (fs-5)</td>
+                            <td><span class="badge bg-success">+25%</span></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Iconos</strong></td>
+                            <td>sin especificar</td>
+                            <td>1.5rem (fs-4)</td>
+                            <td><span class="badge bg-success">+50%</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Formulario -->
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-secondary text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-input-cursor-text me-2"></i>
+                Formularios Más Legibles
+            </h3>
+        </div>
+        <div class="card-body">
+            <form>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="nombre" class="form-label">Nombre Completo</label>
+                        <input type="text" class="form-control" id="nombre" placeholder="Escribe tu nombre">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">Correo Electrónico</label>
+                        <input type="email" class="form-control" id="email" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="celula" class="form-label">Célula</label>
+                        <select class="form-select" id="celula">
+                            <option selected>Selecciona una célula...</option>
+                            <option value="1">Enterprise Team</option>
+                            <option value="2">Nova</option>
+                            <option value="3">MindShift</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label for="comentarios" class="form-label">Comentarios</label>
+                        <textarea class="form-control" id="comentarios" rows="3" placeholder="Escribe tus comentarios..."></textarea>
+                    </div>
+                </div>
+
+                <p class="text-muted mt-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Los labels ahora son <strong>1.1rem</strong> con peso 500, y los inputs son <strong>1.05rem</strong>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sección de Resumen -->
+    <div class="card mb-5 shadow border-success">
+        <div class="card-header bg-success text-white">
+            <h3 class="mb-0">
+                <i class="bi bi-check2-all me-2"></i>
+                Resumen de Mejoras
+            </h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>✅ Legibilidad Mejorada</h5>
+                    <ul>
+                        <li>Texto 15-20% más grande</li>
+                        <li>Mayor espaciado entre líneas</li>
+                        <li>Contraste mejorado</li>
+                        <li>Menos fatiga visual</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>✅ Personalización</h5>
+                    <ul>
+                        <li>Foto de perfil visible</li>
+                        <li>Nombre completo mostrado</li>
+                        <li>Avatar por defecto elegante</li>
+                        <li>Dropdown con información</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="text-center">
+                <a asp-controller="Consultores" asp-action="Index" class="btn btn-primary btn-lg">
+                    <i class="bi bi-arrow-right-circle-fill me-2"></i>
+                    Explorar Consultores
+                </a>
+                <a asp-controller="Diagnostico" asp-action="Index" class="btn btn-outline-info btn-lg ms-2" target="_blank">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Ver Diagnóstico
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Animación de entrada para las cards
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(20px)';
+                    card.style.transition = 'all 0.5s ease';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 100);
+            });
+        });
+    </script>
+}

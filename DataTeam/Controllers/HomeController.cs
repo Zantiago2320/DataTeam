@@ -1,4 +1,5 @@
 using DataTeam.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -8,7 +9,14 @@ namespace DataTeam.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            // Si el usuario ya está autenticado, redirigir al organigrama
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                return RedirectToAction("Index", "Organigrama");
+            }
+
+            // Si no está autenticado, redirigir al login
+            return RedirectToPage("/Account/Login", new { area = "Identity" });
         }
 
         public IActionResult Privacy()

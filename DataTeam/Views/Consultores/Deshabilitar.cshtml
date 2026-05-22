@@ -1,0 +1,152 @@
+@model DataTeam.ViewModels.DeshabilitarConsultorViewModel
+
+@{
+    ViewData["Title"] = "Deshabilitar Consultor";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-x-fill me-2"></i>Deshabilitar Consultor
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Atención:</strong> Esta acción deshabilitará al consultor del sistema. 
+                        La información se mantendrá en el historial pero el consultor no podrá acceder al sistema.
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body bg-light">
+                            <h5 class="card-title">Información del Consultor</h5>
+                            <dl class="row mb-0">
+                                <dt class="col-sm-3">Nombre:</dt>
+                                <dd class="col-sm-9"><strong>@Model.ConsultorNombre</strong></dd>
+
+                                <dt class="col-sm-3">Cédula:</dt>
+                                <dd class="col-sm-9">@Model.ConsultorCedula</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <form asp-action="ConfirmarDeshabilitar" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="ConsultorId" />
+                        <input type="hidden" asp-for="ConsultorNombre" />
+                        <input type="hidden" asp-for="ConsultorCedula" />
+
+                        <div class="mb-3">
+                            <label asp-for="TipoDesvinculacion" class="form-label">
+                                <i class="bi bi-tag-fill"></i> Tipo de Desvinculación <span class="text-danger">*</span>
+                            </label>
+                            <select asp-for="TipoDesvinculacion" class="form-select" required>
+                                <option value="">-- Seleccione el tipo de desvinculación --</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.Despido)">Despido</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.RenunciaVoluntaria)">Renuncia Voluntaria</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.FinDeContrato)">Fin de Contrato</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.MutuoAcuerdo)">Mutuo Acuerdo</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.AbandonoDeTrabajo)">Abandono de Trabajo</option>
+                                <option value="@((int)DataTeam.Models.MotivoDeshabilitacion.Otros)">Otros</option>
+                            </select>
+                            <span asp-validation-for="TipoDesvinculacion" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="FechaRetiro" class="form-label">
+                                <i class="bi bi-calendar-event"></i> Fecha de Retiro <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="FechaRetiro" class="form-control" type="date" required />
+                            <span asp-validation-for="FechaRetiro" class="text-danger"></span>
+                            <div class="form-text">
+                                Fecha efectiva del retiro del consultor
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="MotivoDetallado" class="form-label">
+                                <i class="bi bi-file-text"></i> Motivo Detallado <span class="text-danger">*</span>
+                            </label>
+                            <textarea asp-for="MotivoDetallado" 
+                                      class="form-control" 
+                                      rows="5" 
+                                      placeholder="Describa detalladamente el motivo de la desvinculación..." 
+                                      required
+                                      maxlength="500"></textarea>
+                            <span asp-validation-for="MotivoDetallado" class="text-danger"></span>
+                            <div class="form-text">
+                                Esta información quedará registrada en el historial del consultor
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-info-circle-fill me-2"></i>¿Qué sucede al deshabilitar?
+                            </h6>
+                            <ul class="mb-0">
+                                <li>El consultor será marcado como "Retirado" en el sistema</li>
+                                <li>No podrá acceder ni aparecer en listados activos</li>
+                                <li>Su información se conservará en el historial</li>
+                                <li>Los administradores podrán ver el motivo de desvinculación</li>
+                                <li>La acción quedará registrada en los logs de auditoría</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a asp-action="Index" class="btn btn-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-person-x-fill"></i> Confirmar Deshabilitación
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Establecer la fecha máxima como hoy para evitar fechas futuras
+        document.addEventListener('DOMContentLoaded', function() {
+            const fechaRetiroInput = document.querySelector('input[name="FechaRetiro"]');
+            if (fechaRetiroInput) {
+                const today = new Date().toISOString().split('T')[0];
+                fechaRetiroInput.setAttribute('max', today);
+            }
+        });
+    </script>
+}
+
+<style>
+    .card {
+        border-radius: 0.5rem;
+    }
+
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .alert ul {
+        padding-left: 1.5rem;
+    }
+</style>

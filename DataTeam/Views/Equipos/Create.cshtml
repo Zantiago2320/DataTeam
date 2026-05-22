@@ -1,0 +1,75 @@
+@model DataTeam.Models.Equipo
+@{
+    ViewData["Title"] = "Crear Equipo";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Crear Nuevo Equipo</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Nombre" class="form-label"></label>
+                            <input asp-for="Nombre" class="form-control" placeholder="Ej: Equipo Alpha" />
+                            <span asp-validation-for="Nombre" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Descripcion" class="form-label"></label>
+                            <textarea asp-for="Descripcion" class="form-control" rows="3" placeholder="Descripción del equipo..."></textarea>
+                            <span asp-validation-for="Descripcion" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Color" class="form-label"></label>
+                            <input asp-for="Color" type="color" class="form-control form-control-color" value="#007bff" />
+                            <small class="form-text text-muted">Color para identificar el equipo en el organigrama</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="bi bi-star-fill text-warning me-1"></i>
+                                Seleccionar Líderes del Equipo
+                            </label>
+                            <select name="lideresIds" class="form-select" multiple size="8">
+                                @foreach (var consultor in (ViewBag.Consultores as MultiSelectList))
+                                {
+                                    <option value="@consultor.Value">@consultor.Text</option>
+                                }
+                            </select>
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Mantén presionado Ctrl (Windows) o Cmd (Mac) para seleccionar múltiples líderes. 
+                                El primer líder seleccionado será el líder principal.
+                            </small>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input asp-for="Activo" class="form-check-input" checked />
+                            <label asp-for="Activo" class="form-check-label"></label>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Crear Equipo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

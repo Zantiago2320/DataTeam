@@ -1,0 +1,220 @@
+@model DataTeam.Models.Consultor
+@{
+    ViewData["Title"] = "Detalles del Consultor";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-badge"></i> Detalles del Consultor
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <img src="@(string.IsNullOrEmpty(Model.RutaFoto) ? "/images/default-avatar.svg" : Model.RutaFoto)" 
+                                 alt="@Model.Nombre" 
+                                 class="img-fluid rounded-circle border border-3"
+                                 style="width: 200px; height: 200px; object-fit: cover;">
+                        </div>
+                        <div class="col-md-9">
+                            <h3>@Model.Nombre</h3>
+                            <p class="lead">@Model.Cargo</p>
+
+                            <div class="mb-3">
+                                @if (Model.Estado == DataTeam.Models.EstadoConsultor.Activo)
+                                {
+                                    <span class="badge bg-success fs-6">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary fs-6">Retirado</span>
+                                }
+                            </div>
+
+                            <!-- Células donde es miembro -->
+                            @if (Model.CelulasMiembro?.Any() == true)
+                            {
+                                <div class="mb-2">
+                                    <h6 class="text-muted mb-2 d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-diagram-3"></i> Células Asignadas:
+                                        </span>
+                                        @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                                        {
+                                            <a asp-action="AsignarCelula" asp-route-id="@Model.Id" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-plus-circle"></i> Agregar Célula
+                                            </a>
+                                        }
+                                    </h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var miembro in Model.CelulasMiembro)
+                                        {
+                                            <div class="badge fs-6 d-inline-flex align-items-center position-relative" 
+                                                 style="background-color: @(miembro.Celula?.Color ?? "#6c757d"); padding-right: 2.5rem;">
+                                                <i class="bi bi-tag me-1"></i>
+                                                @miembro.Celula?.Nombre
+                                                <small class="ms-2 opacity-75">(@miembro.Rol)</small>
+
+                                                @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                                                {
+                                                    <form asp-action="RemoverCelula" 
+                                                          method="post" 
+                                                          class="d-inline position-absolute end-0 top-0 bottom-0"
+                                                          onsubmit="return confirm('¿Está seguro de remover al consultor de esta célula?');">
+                                                        <input type="hidden" name="consultorId" value="@Model.Id" />
+                                                        <input type="hidden" name="celulaId" value="@miembro.CelulaId" />
+                                                        <button type="submit" 
+                                                                class="btn btn-link text-white p-0 px-1 border-0" 
+                                                                style="font-size: 0.85rem; text-decoration: none; opacity: 0.8;"
+                                                                title="Remover de esta célula">
+                                                            <i class="bi bi-x-circle"></i>
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                            {
+                                <div class="mb-2">
+                                    <h6 class="text-muted mb-2">
+                                        <i class="bi bi-diagram-3"></i> Células Asignadas:
+                                    </h6>
+                                    <div class="alert alert-info d-flex justify-content-between align-items-center">
+                                        <span>
+                                            <i class="bi bi-info-circle"></i> Este consultor no está asignado a ninguna célula como miembro
+                                        </span>
+                                        <a asp-action="AsignarCelula" asp-route-id="@Model.Id" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus-circle"></i> Asignar Primera Célula
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Células donde es líder -->
+                            @if (Model.CelulasQueLidera?.Any() == true)
+                            {
+                                <div class="mb-2">
+                                    <h6 class="text-warning mb-2">
+                                        <i class="bi bi-star-fill"></i> Lidera Células:
+                                    </h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach (var lider in Model.CelulasQueLidera)
+                                        {
+                                            <span class="badge bg-warning text-dark fs-6 d-inline-flex align-items-center">
+                                                <i class="bi bi-person-badge me-1"></i>
+                                                @lider.Celula?.Nombre
+                                                @if (lider.EsLiderPrincipal)
+                                                {
+                                                    <i class="bi bi-award-fill ms-1" title="Líder Principal"></i>
+                                                }
+                                            </span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-card-text"></i> Información Personal</h5>
+                            <dl class="row">
+                                <dt class="col-sm-4">Cédula:</dt>
+                                <dd class="col-sm-8">@Model.Cedula</dd>
+
+                                <dt class="col-sm-4">Correo:</dt>
+                                <dd class="col-sm-8">@Model.Correo</dd>
+
+                                <dt class="col-sm-4">Celular:</dt>
+                                <dd class="col-sm-8">@Model.Celular</dd>
+
+                                <dt class="col-sm-4">Emergencia:</dt>
+                                <dd class="col-sm-8">@Model.CelularEmergencia</dd>
+                            </dl>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-calendar-event"></i> Fechas</h5>
+                            <dl class="row">
+                                <dt class="col-sm-5">Fecha Ingreso:</dt>
+                                <dd class="col-sm-7">@Model.FechaIngreso.ToString("dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Fecha Nacimiento:</dt>
+                                <dd class="col-sm-7">@Model.FechaNacimiento.ToString("dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Edad:</dt>
+                                <dd class="col-sm-7">@((DateTime.Today - Model.FechaNacimiento).Days / 365) años</dd>
+
+                                <dt class="col-sm-5">Antigüedad:</dt>
+                                <dd class="col-sm-7">@((DateTime.Today - Model.FechaIngreso).Days / 365) años</dd>
+                            </dl>
+                        </div>
+                    </div>
+
+                    @if (Model.Estado == DataTeam.Models.EstadoConsultor.Retirado && !string.IsNullOrEmpty(Model.MotivoRetiro))
+                    {
+                        <hr />
+                        <div class="alert alert-warning">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-info-circle-fill me-2"></i>Información de Desvinculación
+                            </h5>
+                            @if (Model.TipoDesvinculacion.HasValue)
+                            {
+                                <p class="mb-2">
+                                    <strong>Tipo:</strong> 
+                                    <span class="badge bg-secondary">
+                                        @Model.TipoDesvinculacion.Value.ToString()
+                                    </span>
+                                </p>
+                            }
+                            @if (Model.FechaRetiro.HasValue)
+                            {
+                                <p class="mb-2">
+                                    <strong>Fecha de Retiro:</strong> @Model.FechaRetiro.Value.ToString("dd/MM/yyyy")
+                                </p>
+                            }
+                            <p class="mb-0">
+                                <strong>Motivo:</strong> @Model.MotivoRetiro
+                            </p>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a asp-action="Index" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver a la lista
+                        </a>
+                        <div>
+                            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                    <i class="bi bi-pencil"></i> Editar
+                                </a>
+                            }
+                            @if (User.IsInRole("SuperAdmin"))
+                            {
+                                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">
+                                    <i class="bi bi-trash"></i> Deshabilitar
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+}

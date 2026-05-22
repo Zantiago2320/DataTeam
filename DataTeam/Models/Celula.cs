@@ -20,14 +20,22 @@ public class Celula
     [Display(Name = "Color")]
     public string? Color { get; set; }
 
-    [Display(Name = "Líder de Célula")]
-    public int? LiderConsultorId { get; set; }
-
     [Display(Name = "Activa")]
     public bool Activa { get; set; } = true;
 
     [Display(Name = "Fecha de Creación")]
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
+    [Display(Name = "Fecha de Última Modificación")]
+    public DateTime? FechaModificacion { get; set; }
+
+    // Relaciones
+    [Display(Name = "Líderes de la Célula")]
+    public ICollection<CelulaLider> CelulaLideres { get; set; } = new List<CelulaLider>();
+
+    [Display(Name = "Miembros de la Célula")]
+    public ICollection<CelulaMiembro> CelulaMiembros { get; set; } = new List<CelulaMiembro>();
+
+    [Display(Name = "Consultores de la Célula")]
     public ICollection<Consultor> Consultores { get; set; } = new List<Consultor>();
 }

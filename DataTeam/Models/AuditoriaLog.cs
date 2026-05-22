@@ -26,6 +26,10 @@ public class AuditoriaLog
     [StringLength(256)]
     public string? Usuario { get; set; }
 
+    [Display(Name = "Rol")]
+    [StringLength(50)]
+    public string? RolUsuario { get; set; }
+
     [Display(Name = "Valores Anteriores")]
     public string? ValoresAnteriores { get; set; }
 

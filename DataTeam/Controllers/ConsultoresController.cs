@@ -32,7 +32,7 @@ public class ConsultoresController : Controller
     }
 
     // GET: Consultores
-    public async Task<IActionResult> Index(string? buscar, int? celulaId, EstadoConsultor? estado)
+    public async Task<IActionResult> Index(string? buscar, int? celulaId, EstadoConsultor? estado, string? cargo, string? ordenarPor)
     {
         var query = _context.Consultores
             .Include(c => c.Celula)
@@ -60,10 +60,24 @@ public class ConsultoresController : Controller
             query = query.Where(c => c.Estado == estado.Value);
         }
 
-        var consultores = await query
-            .OrderBy(c => c.Celula!.Nombre)
-            .ThenBy(c => c.Nombre)
-            .ToListAsync();
+        // Filtrar por cargo
+        if (!string.IsNullOrWhiteSpace(cargo))
+        {
+            query = query.Where(c => c.Cargo == cargo);
+        }
+
+        // Aplicar ordenamiento
+        query = ordenarPor switch
+        {
+            "celula" => query.OrderBy(c => c.Celula!.Nombre).ThenBy(c => c.Nombre),
+            "estado" => query.OrderBy(c => c.Estado).ThenBy(c => c.Nombre),
+            "cargo" => query.OrderBy(c => c.Cargo).ThenBy(c => c.Nombre),
+            "fecha_nuevo" => query.OrderByDescending(c => c.FechaIngreso).ThenBy(c => c.Nombre),
+            "fecha_antiguo" => query.OrderBy(c => c.FechaIngreso).ThenBy(c => c.Nombre),
+            _ => query.OrderBy(c => c.Celula!.Nombre).ThenBy(c => c.Nombre) // Por defecto
+        };
+
+        var consultores = await query.ToListAsync();
 
         // Cargar células para el filtro
         ViewBag.Celulas = await _context.Celulas
@@ -71,9 +85,19 @@ public class ConsultoresController : Controller
             .OrderBy(c => c.Nombre)
             .ToListAsync();
 
+        // Cargar lista de cargos únicos para el filtro
+        ViewBag.Cargos = await _context.Consultores
+            .Where(c => !c.Eliminado)
+            .Select(c => c.Cargo)
+            .Distinct()
+            .OrderBy(c => c)
+            .ToListAsync();
+
         ViewBag.BuscarActual = buscar;
         ViewBag.CelulaIdActual = celulaId;
         ViewBag.EstadoActual = estado;
+        ViewBag.CargoActual = cargo;
+        ViewBag.OrdenarPorActual = ordenarPor;
 
         return View(consultores);
     }
@@ -88,6 +112,10 @@ public class ConsultoresController : Controller
 
         var consultor = await _context.Consultores
             .Include(c => c.Celula)
+            .Include(c => c.CelulasMiembro)
+                .ThenInclude(cm => cm.Celula)
+            .Include(c => c.CelulasQueLidera)
+                .ThenInclude(cl => cl.Celula)
             .Include(c => c.Auditorias)
             .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -100,7 +128,8 @@ public class ConsultoresController : Controller
     }
 
     // GET: Consultores/Create
-    public async Task<IActionResult> Create()
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public IActionResult Create()
     {
         var viewModel = new ConsultorViewModel
         {
@@ -109,17 +138,13 @@ public class ConsultoresController : Controller
             Estado = EstadoConsultor.Activo
         };
 
-        ViewBag.Celulas = await _context.Celulas
-            .Where(c => c.Activa)
-            .OrderBy(c => c.Nombre)
-            .ToListAsync();
-
         return View(viewModel);
     }
 
     // POST: Consultores/Create
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Create(ConsultorViewModel viewModel)
     {
         if (ModelState.IsValid)
@@ -130,7 +155,6 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Cedula == viewModel.Cedula))
                 {
                     ModelState.AddModelError("Cedula", "Ya existe un consultor con esta cédula");
-                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -138,7 +162,6 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Correo == viewModel.Correo))
                 {
                     ModelState.AddModelError("Correo", "Ya existe un consultor con este correo");
-                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -163,7 +186,6 @@ public class ConsultoresController : Controller
                     RutaFoto = rutaFoto,
                     FechaIngreso = viewModel.FechaIngreso,
                     FechaNacimiento = viewModel.FechaNacimiento,
-                    CelulaId = viewModel.CelulaId,
                     Rol = viewModel.Rol,
                     Capacidad = viewModel.Capacidad,
                     Empresa = viewModel.Empresa,
@@ -206,6 +228,7 @@ public class ConsultoresController : Controller
     }
 
     // GET: Consultores/Edit/5
+    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Edit(int? id)
     {
         if (id == null)
@@ -229,7 +252,6 @@ public class ConsultoresController : Controller
             RutaFoto = consultor.RutaFoto,
             FechaIngreso = consultor.FechaIngreso,
             FechaNacimiento = consultor.FechaNacimiento,
-            CelulaId = consultor.CelulaId,
             Rol = consultor.Rol,
             Capacidad = consultor.Capacidad,
             Empresa = consultor.Empresa,
@@ -241,13 +263,13 @@ public class ConsultoresController : Controller
             Estado = consultor.Estado
         };
 
-        ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
         return View(viewModel);
     }
 
     // POST: Consultores/Edit/5
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin,Admin")]
     public async Task<IActionResult> Edit(int id, ConsultorViewModel viewModel)
     {
         if (id != viewModel.Id)
@@ -272,7 +294,6 @@ public class ConsultoresController : Controller
                     consultor.Nombre,
                     consultor.Correo,
                     consultor.Cargo,
-                    consultor.CelulaId,
                     consultor.Rol,
                     consultor.Capacidad,
                     consultor.Estado
@@ -282,7 +303,6 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Cedula == viewModel.Cedula && c.Id != id))
                 {
                     ModelState.AddModelError("Cedula", "Ya existe un consultor con esta cédula");
-                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -290,7 +310,6 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Correo == viewModel.Correo && c.Id != id))
                 {
                     ModelState.AddModelError("Correo", "Ya existe un consultor con este correo");
-                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -313,7 +332,6 @@ public class ConsultoresController : Controller
                 consultor.Cargo = viewModel.Cargo;
                 consultor.FechaIngreso = viewModel.FechaIngreso;
                 consultor.FechaNacimiento = viewModel.FechaNacimiento;
-                consultor.CelulaId = viewModel.CelulaId;
                 consultor.Rol = viewModel.Rol;
                 consultor.Capacidad = viewModel.Capacidad;
                 consultor.Empresa = viewModel.Empresa;
@@ -376,6 +394,7 @@ public class ConsultoresController : Controller
     }
 
     // GET: Consultores/Delete/5
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> Delete(int? id)
     {
         if (id == null)
@@ -384,6 +403,7 @@ public class ConsultoresController : Controller
         }
 
         var consultor = await _context.Consultores
+            .IgnoreQueryFilters() // Incluir consultores eliminados
             .Include(c => c.Celula)
             .FirstOrDefaultAsync(m => m.Id == id);
 
@@ -395,46 +415,182 @@ public class ConsultoresController : Controller
         return View(consultor);
     }
 
-    // POST: Consultores/Delete/5
+    // POST: Consultores/Delete/5 (Soft Delete)
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin")]
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
+        // Redirigir a la nueva página de deshabilitación con motivo
+        return RedirectToAction(nameof(Deshabilitar), new { id });
+    }
+
+    // GET: Consultores/Deshabilitar/5
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Deshabilitar(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var consultor = await _context.Consultores
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (consultor == null)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new DeshabilitarConsultorViewModel
+        {
+            ConsultorId = consultor.Id,
+            ConsultorNombre = consultor.Nombre,
+            ConsultorCedula = consultor.Cedula,
+            FechaRetiro = DateTime.Now
+        };
+
+        return View(viewModel);
+    }
+
+    // POST: Consultores/ConfirmarDeshabilitar
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> ConfirmarDeshabilitar(DeshabilitarConsultorViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("Deshabilitar", model);
+        }
+
         try
         {
-            var consultor = await _context.Consultores.FindAsync(id);
-            if (consultor != null)
+            var consultor = await _context.Consultores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == model.ConsultorId);
+
+            if (consultor == null)
             {
-                // Eliminar foto si existe
-                if (!string.IsNullOrEmpty(consultor.RutaFoto))
-                {
-                    await _fileService.EliminarFotoAsync(consultor.RutaFoto);
-                }
-
-                // Registrar auditoría antes de eliminar
-                await _auditoriaService.RegistrarCambioAsync(
-                    "Consultor",
-                    consultor.Id,
-                    "Eliminar",
-                    User.Identity?.Name,
-                    consultor,
-                    null,
-                    HttpContext.Connection.RemoteIpAddress?.ToString()
-                );
-
-                _context.Consultores.Remove(consultor);
-                await _context.SaveChangesAsync();
-
-                TempData["Success"] = "Consultor eliminado exitosamente";
+                return NotFound();
             }
 
+            // Capturar estado anterior para auditoría
+            var estadoAnterior = new
+            {
+                consultor.Eliminado,
+                consultor.Estado,
+                consultor.FechaEliminacion,
+                consultor.EliminadoPor,
+                consultor.FechaRetiro,
+                consultor.TipoDesvinculacion,
+                consultor.MotivoRetiro
+            };
+
+            // Marcar como eliminado y retirado
+            consultor.Eliminado = true;
+            consultor.Estado = EstadoConsultor.Retirado;
+            consultor.FechaEliminacion = DateTime.Now;
+            consultor.EliminadoPor = User.Identity?.Name ?? "Sistema";
+            consultor.FechaRetiro = model.FechaRetiro;
+            consultor.TipoDesvinculacion = model.TipoDesvinculacion;
+            consultor.MotivoRetiro = $"[{model.TipoDesvinculacion}] {model.MotivoDetallado}";
+
+            await _context.SaveChangesAsync();
+
+            // Registrar auditoría
+            await _auditoriaService.RegistrarCambioAsync(
+                "Consultor",
+                consultor.Id,
+                "Deshabilitar",
+                User.Identity?.Name,
+                estadoAnterior,
+                new 
+                { 
+                    consultor.Eliminado, 
+                    consultor.Estado,
+                    consultor.FechaEliminacion, 
+                    consultor.EliminadoPor,
+                    consultor.FechaRetiro,
+                    consultor.TipoDesvinculacion,
+                    consultor.MotivoRetiro
+                },
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            TempData["Success"] = $"Consultor {consultor.Nombre} deshabilitado exitosamente. Motivo: {model.TipoDesvinculacion}";
             return RedirectToAction(nameof(Index));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al eliminar consultor");
-            TempData["Error"] = "Error al eliminar el consultor. Puede que tenga datos relacionados.";
-            return RedirectToAction(nameof(Delete), new { id });
+            _logger.LogError(ex, "Error al deshabilitar consultor");
+            TempData["Error"] = "Error al deshabilitar el consultor.";
+            return View("Deshabilitar", model);
+        }
+    }
+
+    // GET: Consultores/Eliminados (Ver consultores deshabilitados)
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Eliminados()
+    {
+        var consultores = await _context.Consultores
+            .IgnoreQueryFilters()
+            .Where(c => c.Eliminado)
+            .Include(c => c.Celula)
+            .OrderByDescending(c => c.FechaEliminacion)
+            .ToListAsync();
+
+        return View(consultores);
+    }
+
+    // POST: Consultores/Restaurar/5
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> Restaurar(int id)
+    {
+        try
+        {
+            var consultor = await _context.Consultores
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c => c.Id == id && c.Eliminado);
+
+            if (consultor != null)
+            {
+                var estadoAnterior = new
+                {
+                    consultor.Eliminado,
+                    consultor.FechaEliminacion,
+                    consultor.EliminadoPor
+                };
+
+                consultor.Eliminado = false;
+                consultor.FechaEliminacion = null;
+                consultor.EliminadoPor = null;
+
+                await _context.SaveChangesAsync();
+
+                // Registrar auditoría
+                await _auditoriaService.RegistrarCambioAsync(
+                    "Consultor",
+                    consultor.Id,
+                    "Restaurar",
+                    User.Identity?.Name,
+                    estadoAnterior,
+                    new { consultor.Eliminado },
+                    HttpContext.Connection.RemoteIpAddress?.ToString()
+                );
+
+                TempData["Success"] = "Consultor restaurado exitosamente";
+            }
+
+            return RedirectToAction(nameof(Eliminados));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al restaurar consultor");
+            TempData["Error"] = "Error al restaurar el consultor.";
+            return RedirectToAction(nameof(Eliminados));
         }
     }
 
@@ -465,6 +621,156 @@ public class ConsultoresController : Controller
             _logger.LogError(ex, "Error al exportar consultores a Excel");
             TempData["Error"] = "Error al generar el archivo Excel";
             return RedirectToAction(nameof(Index));
+        }
+    }
+
+    // GET: Consultores/AsignarCelula/5
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> AsignarCelula(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var consultor = await _context.Consultores
+            .Include(c => c.CelulasMiembro)
+                .ThenInclude(cm => cm.Celula)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (consultor == null)
+        {
+            return NotFound();
+        }
+
+        // Obtener células activas que el consultor NO tiene asignadas aún
+        var celulasAsignadas = consultor.CelulasMiembro.Select(cm => cm.CelulaId).ToList();
+        var celulasDisponibles = await _context.Celulas
+            .Where(c => c.Activa && !celulasAsignadas.Contains(c.Id))
+            .OrderBy(c => c.Nombre)
+            .ToListAsync();
+
+        ViewBag.Consultor = consultor;
+        ViewBag.CelulasDisponibles = celulasDisponibles;
+
+        return View();
+    }
+
+    // POST: Consultores/AsignarCelula
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> AsignarCelula(int consultorId, int celulaId, string rol)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(rol))
+            {
+                TempData["Error"] = "El rol es requerido";
+                return RedirectToAction(nameof(AsignarCelula), new { id = consultorId });
+            }
+
+            var consultor = await _context.Consultores
+                .Include(c => c.CelulasMiembro)
+                .FirstOrDefaultAsync(c => c.Id == consultorId);
+
+            if (consultor == null)
+            {
+                return NotFound();
+            }
+
+            var celula = await _context.Celulas.FindAsync(celulaId);
+            if (celula == null || !celula.Activa)
+            {
+                TempData["Error"] = "Célula no encontrada o inactiva";
+                return RedirectToAction(nameof(AsignarCelula), new { id = consultorId });
+            }
+
+            // Validar que no esté ya asignado a esta célula
+            var yaAsignado = consultor.CelulasMiembro.Any(cm => cm.CelulaId == celulaId);
+            if (yaAsignado)
+            {
+                TempData["Warning"] = "El consultor ya está asignado a esta célula";
+                return RedirectToAction(nameof(Details), new { id = consultorId });
+            }
+
+            // Crear nueva asignación
+            var nuevaAsignacion = new CelulaMiembro
+            {
+                ConsultorId = consultorId,
+                CelulaId = celulaId,
+                Rol = rol,
+                FechaAsignacion = DateTime.Now
+            };
+
+            _context.CelulaMiembros.Add(nuevaAsignacion);
+            await _context.SaveChangesAsync();
+
+            // Registrar auditoría
+            await _auditoriaService.RegistrarCambioAsync(
+                "CelulaMiembro",
+                nuevaAsignacion.Id,
+                "Crear",
+                User.Identity?.Name,
+                null,
+                nuevaAsignacion,
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            TempData["Success"] = $"Consultor asignado exitosamente a la célula {celula.Nombre} como {rol}";
+            return RedirectToAction(nameof(Details), new { id = consultorId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al asignar célula a consultor");
+            TempData["Error"] = "Error al asignar la célula";
+            return RedirectToAction(nameof(AsignarCelula), new { id = consultorId });
+        }
+    }
+
+    // POST: Consultores/RemoverCelula
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "SuperAdmin,Admin")]
+    public async Task<IActionResult> RemoverCelula(int consultorId, int celulaId)
+    {
+        try
+        {
+            var miembro = await _context.CelulaMiembros
+                .Include(cm => cm.Celula)
+                .FirstOrDefaultAsync(cm => cm.ConsultorId == consultorId && cm.CelulaId == celulaId);
+
+            if (miembro == null)
+            {
+                TempData["Warning"] = "Asignación no encontrada";
+                return RedirectToAction(nameof(Details), new { id = consultorId });
+            }
+
+            var estadoAnterior = new { miembro.ConsultorId, miembro.CelulaId, miembro.Rol };
+            var nombreCelula = miembro.Celula?.Nombre ?? "Desconocida";
+
+            _context.CelulaMiembros.Remove(miembro);
+            await _context.SaveChangesAsync();
+
+            // Registrar auditoría
+            await _auditoriaService.RegistrarCambioAsync(
+                "CelulaMiembro",
+                miembro.Id,
+                "Eliminar",
+                User.Identity?.Name,
+                estadoAnterior,
+                null,
+                HttpContext.Connection.RemoteIpAddress?.ToString()
+            );
+
+            TempData["Success"] = $"Consultor removido de la célula {nombreCelula}";
+            return RedirectToAction(nameof(Details), new { id = consultorId });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al remover célula de consultor");
+            TempData["Error"] = "Error al remover la célula";
+            return RedirectToAction(nameof(Details), new { id = consultorId });
         }
     }
 

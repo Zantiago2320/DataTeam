@@ -1,26 +1,115 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using DataTeam.Data
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@inject ApplicationDbContext DbContext
+
+@{
+    string? fotoPerfil = null;
+    string nombreCompleto = User.Identity?.Name ?? "Usuario";
+
+    if (SignInManager.IsSignedIn(User))
+    {
+        var userEmail = User.Identity?.Name;
+        var consultor = DbContext.Consultores
+            .FirstOrDefault(c => c.Correo == userEmail && !c.Eliminado);
+
+        if (consultor != null)
+        {
+            fotoPerfil = consultor.RutaFoto;
+            nombreCompleto = consultor.Nombre;
+        }
+    }
+}
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
-    </li>
-    <li class="nav-item">
-        <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-            <button  type="submit" class="nav-link btn btn-link text-dark">Logout</button>
-        </form>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle d-flex align-items-center text-white px-3" 
+           href="#" 
+           role="button" 
+           data-bs-toggle="dropdown" 
+           aria-expanded="false"
+           style="font-size: 1.1rem;">
+            @if (!string.IsNullOrEmpty(fotoPerfil))
+            {
+                <img src="@fotoPerfil" 
+                     alt="Foto de perfil" 
+                     class="rounded-circle me-2 border border-2 border-white"
+                     style="width: 40px; height: 40px; object-fit: cover;"
+                     onerror="this.onerror=null; this.src='/images/default-avatar.svg';">
+            }
+            else
+            {
+                <i class="bi bi-person-circle fs-3 me-2"></i>
+            }
+            <span class="fw-semibold">@nombreCompleto</span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end shadow-lg" style="min-width: 280px;">
+            <li class="px-3 py-2 border-bottom">
+                <div class="d-flex align-items-center">
+                    @if (!string.IsNullOrEmpty(fotoPerfil))
+                    {
+                        <img src="@fotoPerfil" 
+                             alt="Foto de perfil" 
+                             class="rounded-circle me-3 border border-2 border-primary"
+                             style="width: 50px; height: 50px; object-fit: cover;"
+                             onerror="this.onerror=null; this.src='/images/default-avatar.svg';">
+                    }
+                    else
+                    {
+                        <i class="bi bi-person-circle text-primary fs-1 me-3"></i>
+                    }
+                    <div>
+                        <div class="fw-bold" style="font-size: 1rem;">@nombreCompleto</div>
+                        <small class="text-muted" style="font-size: 0.85rem;">@User.Identity?.Name</small>
+                    </div>
+                </div>
+            </li>
+
+            <li>
+                <a class="dropdown-item py-2" href="/Identity/Account/Manage" style="font-size: 1rem;">
+                    <i class="bi bi-gear-fill me-2 text-primary"></i>
+                    Configuración de Cuenta
+                </a>
+            </li>
+
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+            {
+                <li><hr class="dropdown-divider"></li>
+                <li class="px-3 py-1">
+                    <small class="text-muted fw-semibold" style="font-size: 0.75rem;">ADMINISTRACIÓN</small>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" asp-controller="Diagnostico" asp-action="Index" target="_blank" style="font-size: 1rem;">
+                        <i class="bi bi-info-circle-fill me-2 text-info"></i>
+                        Diagnóstico del Sistema
+                    </a>
+                </li>
+            }
+
+            <li><hr class="dropdown-divider"></li>
+
+            <li class="px-3 py-2">
+                <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                    <button type="submit" class="btn btn-danger w-100 py-2" style="font-size: 1rem;">
+                        <i class="bi bi-box-arrow-left me-2"></i>
+                        Cerrar Sesión
+                    </button>
+                </form>
+            </li>
+        </ul>
     </li>
 }
 else
 {
     <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+        <a class="nav-link text-white px-3" asp-area="Identity" asp-page="/Account/Login" style="font-size: 1.1rem;">
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Iniciar Sesión
+        </a>
     </li>
 }
 </ul>
+

@@ -1,0 +1,102 @@
+@{
+    ViewData["Title"] = "Asignar Célula";
+    var consultor = ViewBag.Consultor as DataTeam.Models.Consultor;
+    var celulasDisponibles = ViewBag.CelulasDisponibles as List<DataTeam.Models.Celula>;
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-diagram-3"></i> Asignar Célula a Consultor
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (celulasDisponibles?.Any() == true)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Consultor:</strong> @consultor?.Nombre
+                        </div>
+
+                        <form asp-action="AsignarCelula" method="post">
+                            <input type="hidden" name="consultorId" value="@consultor?.Id" />
+
+                            <div class="mb-3">
+                                <label for="celulaId" class="form-label">
+                                    <i class="bi bi-diagram-3"></i> Célula *
+                                </label>
+                                <select name="celulaId" id="celulaId" class="form-select" required>
+                                    <option value="">-- Seleccione una célula --</option>
+                                    @foreach (var celula in celulasDisponibles)
+                                    {
+                                        <option value="@celula.Id" style="background-color: @celula.Color; color: white;">
+                                            @celula.Nombre
+                                        </option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="rol" class="form-label">
+                                    <i class="bi bi-person-badge"></i> Rol en la Célula *
+                                </label>
+                                <input type="text" 
+                                       name="rol" 
+                                       id="rol" 
+                                       class="form-control" 
+                                       placeholder="Ej: Miembro, Colaborador, Coordinador..."
+                                       required
+                                       maxlength="100" />
+                                <small class="form-text text-muted">
+                                    Especifica el rol que tendrá el consultor en esta célula
+                                </small>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <i class="bi bi-lightbulb"></i>
+                                <strong>Nota:</strong> El consultor puede estar en múltiples células con diferentes roles.
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <a asp-action="Details" asp-route-id="@consultor?.Id" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-plus-circle-fill"></i> Asignar Célula
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>No hay células disponibles</strong><br />
+                            El consultor ya está asignado a todas las células activas o no hay células activas en el sistema.
+                        </div>
+
+                        <a asp-action="Details" asp-route-id="@consultor?.Id" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Volver
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <script>
+        // Sugerencias de roles comunes
+        document.getElementById('rol')?.addEventListener('focus', function() {
+            if (!this.value) {
+                this.placeholder = 'Sugerencias: Miembro, Colaborador, Coordinador, Especialista, Analista...';
+            }
+        });
+    </script>
+}

@@ -38,12 +38,6 @@ public class ConsultorViewModel
     [DataType(DataType.Date)]
     public DateTime FechaNacimiento { get; set; }
 
-    [Required(ErrorMessage = "Debe seleccionar una célula")]
-    [Display(Name = "Célula/Equipo")]
-    public int CelulaId { get; set; }
-
-    public string? CelulaNombre { get; set; }
-
     [Display(Name = "Rol")]
     public string? Rol { get; set; }
 

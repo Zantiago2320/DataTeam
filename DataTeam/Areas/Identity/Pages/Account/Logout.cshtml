@@ -1,0 +1,52 @@
+@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Cerrar sesión";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DataTeam</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logout-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .logout-icon {
+            font-size: 5rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-card">
+        <i class="bi bi-box-arrow-left logout-icon"></i>
+        <h1 class="h3 mb-3">Sesión Cerrada</h1>
+        <p class="text-muted mb-4">Has cerrado sesión exitosamente.</p>
+        <a href="/" class="btn btn-primary btn-lg">
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Volver a Iniciar Sesión
+        </a>
+    </div>
+</body>
+</html>

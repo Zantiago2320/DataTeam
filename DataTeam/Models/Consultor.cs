@@ -40,14 +40,21 @@ public class Consultor
     [Required(ErrorMessage = "La fecha de nacimiento es obligatoria")]
     [Display(Name = "Fecha de Nacimiento")]
     [DataType(DataType.Date)]
+    [FechaNoPuedeSerFutura(ErrorMessage = "La fecha de nacimiento no puede ser en el futuro")]
     public DateTime FechaNacimiento { get; set; }
 
     [Required(ErrorMessage = "La célula es obligatoria")]
-    [Display(Name = "Célula/Equipo")]
+    [Display(Name = "Célula")]
     public int CelulaId { get; set; }
 
     [ForeignKey(nameof(CelulaId))]
     public Celula? Celula { get; set; }
+
+    [Display(Name = "Equipo")]
+    public int? EquipoId { get; set; }
+
+    [ForeignKey(nameof(EquipoId))]
+    public Equipo? Equipo { get; set; }
 
     [StringLength(100)]
     public string? Rol { get; set; }
@@ -83,17 +90,90 @@ public class Consultor
     [Display(Name = "Estado")]
     public EstadoConsultor Estado { get; set; } = EstadoConsultor.Activo;
 
+    [Display(Name = "Fecha de Retiro")]
+    [DataType(DataType.Date)]
+    public DateTime? FechaRetiro { get; set; }
+
+    [Display(Name = "Tipo de Desvinculación")]
+    public MotivoDeshabilitacion? TipoDesvinculacion { get; set; }
+
+    [StringLength(500)]
+    [Display(Name = "Motivo de Retiro")]
+    public string? MotivoRetiro { get; set; }
+
+    [Display(Name = "Eliminado")]
+    public bool Eliminado { get; set; } = false;
+
+    [Display(Name = "Fecha de Eliminación")]
+    public DateTime? FechaEliminacion { get; set; }
+
+    [StringLength(256)]
+    [Display(Name = "Eliminado Por")]
+    public string? EliminadoPor { get; set; }
+
     [Display(Name = "Fecha de Creación")]
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
 
     [Display(Name = "Fecha de Actualización")]
     public DateTime? FechaActualizacion { get; set; }
 
+    // Relaciones de navegación
     public ICollection<AuditoriaLog> Auditorias { get; set; } = new List<AuditoriaLog>();
+
+    [Display(Name = "Equipos que Lidera")]
+    public ICollection<EquipoLider> EquiposQueLidera { get; set; } = new List<EquipoLider>();
+
+    [Display(Name = "Células que Lidera")]
+    public ICollection<CelulaLider> CelulasQueLidera { get; set; } = new List<CelulaLider>();
+
+    [Display(Name = "Células donde es Miembro")]
+    public ICollection<CelulaMiembro> CelulasMiembro { get; set; } = new List<CelulaMiembro>();
 }
 
 public enum EstadoConsultor
 {
+    [Display(Name = "Activo")]
     Activo,
+
+    [Display(Name = "Retirado")]
     Retirado
+}
+
+public enum MotivoDeshabilitacion
+{
+    [Display(Name = "Despido")]
+    Despido,
+
+    [Display(Name = "Renuncia Voluntaria")]
+    RenunciaVoluntaria,
+
+    [Display(Name = "Fin de Contrato")]
+    FinDeContrato,
+
+    [Display(Name = "Mutuo Acuerdo")]
+    MutuoAcuerdo,
+
+    [Display(Name = "Abandono de Trabajo")]
+    AbandonoDeTrabajo,
+
+    [Display(Name = "Otros")]
+    Otros
+}
+
+/// <summary>
+/// Atributo de validación personalizado para evitar fechas futuras
+/// </summary>
+public class FechaNoPuedeSerFuturaAttribute : ValidationAttribute
+{
+    protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
+    {
+        if (value is DateTime fecha)
+        {
+            if (fecha.Date > DateTime.Now.Date)
+            {
+                return new ValidationResult(ErrorMessage ?? "La fecha no puede ser en el futuro");
+            }
+        }
+        return ValidationResult.Success;
+    }
 }

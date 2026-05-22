@@ -24,13 +24,25 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
 })
+.AddRoles<IdentityRole>() // Agregar soporte para roles
 .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Configurar rutas de autenticación
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Identity/Account/Login";
+    options.LogoutPath = "/Identity/Account/Logout";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+});
 
 // Registrar servicios personalizados
 builder.Services.AddScoped<IAuditoriaService, AuditoriaService>();
+builder.Services.AddScoped<IAuditoriaLogFormatterService, AuditoriaLogFormatterService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ICsvService, CsvService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IEquipoService, EquipoService>();
 builder.Services.AddScoped<CumpleanosJob>();
 builder.Services.AddScoped<ReporteMensualJob>();
 builder.Services.AddScoped<DbInitializerService>(); // Servicio de inicialización
@@ -88,15 +100,13 @@ app.UseAuthorization();
 // Agregar Hangfire Dashboard
 app.UseHangfireDashboard("/hangfire");
 
-app.MapStaticAssets();
+app.UseStaticFiles();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 
 // Configurar trabajos recurrentes de Hangfire
 using (var scope = app.Services.CreateScope())

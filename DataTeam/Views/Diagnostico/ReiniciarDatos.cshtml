@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "Reiniciar Datos del Sistema";
+}
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Reiniciar Datos del Sistema
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (TempData["Mensaje"] != null)
+                    {
+                        <div class="alert alert-@(TempData["TipoMensaje"] ?? "info") alert-dismissible fade show" role="alert">
+                            @TempData["Mensaje"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <div class="alert alert-warning" role="alert">
+                        <h5 class="alert-heading">
+                            <i class="bi bi-exclamation-octagon me-2"></i>
+                            ¡ADVERTENCIA!
+                        </h5>
+                        <p>Esta acción eliminará <strong>TODOS</strong> los datos de:</p>
+                        <ul>
+                            <li>Consultores</li>
+                            <li>Células</li>
+                            <li>Equipos</li>
+                            <li>Relaciones de liderazgo</li>
+                        </ul>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Después de limpiar</strong>, deberás <strong>REINICIAR LA APLICACIÓN</strong> para que se carguen nuevamente los datos desde <code>DbInitializerService</code>.
+                        </p>
+                    </div>
+
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Pasos Recomendados:
+                            </h5>
+                            <ol class="mb-0">
+                                <li>Haz clic en "Limpiar Base de Datos"</li>
+                                <li><strong>Detén la aplicación</strong> (Stop en Visual Studio)</li>
+                                <li><strong>Inicia de nuevo</strong> (F5)</li>
+                                <li>Los datos se cargarán automáticamente al iniciar</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <form asp-action="ReiniciarDatosConfirmado" method="post" onsubmit="return confirm('¿Estás SEGURO de que deseas eliminar todos los datos? Esta acción NO se puede deshacer.');">
+                        @Html.AntiForgeryToken()
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a asp-controller="Consultores" asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash3 me-2"></i>
+                                Limpiar Base de Datos
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        Estado Actual del Sistema
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>Para ver el estado actual de los datos, visita:</p>
+                    <a asp-action="Index" class="btn btn-sm btn-info">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Ver Diagnóstico JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Confirmación adicional
+        document.querySelector('form').addEventListener('submit', function(e) {
+            if (!confirm('🚨 ÚLTIMA CONFIRMACIÓN: ¿Eliminar TODOS los datos?')) {
+                e.preventDefault();
+            }
+        });
+    </script>
+}
