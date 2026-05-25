@@ -23,24 +23,26 @@ public class ExcelService : IExcelService
     public async Task<byte[]> ExportarConsultoresAsync()
     {
         var consultores = await _context.Consultores
-            .Include(c => c.Celula)
-            .OrderBy(c => c.Celula!.Nombre)
-            .ThenBy(c => c.Nombre)
+            .Include(c => c.CelulasMiembro)
+                .ThenInclude(cm => cm.Celula)
+            .Where(c => c.Estado == EstadoConsultor.Activo)
+            .OrderBy(c => c.Nombre)
             .ToListAsync();
 
-        return GenerarExcel(consultores, "Todos los Consultores");
+        return GenerarExcel(consultores, "DataTeam - Consultores");
     }
 
     public async Task<byte[]> ExportarConsultoresPorCelulaAsync(int celulaId)
     {
         var celula = await _context.Celulas.FindAsync(celulaId);
         var consultores = await _context.Consultores
-            .Include(c => c.Celula)
-            .Where(c => c.CelulaId == celulaId)
+            .Include(c => c.CelulasMiembro)
+                .ThenInclude(cm => cm.Celula)
+            .Where(c => c.CelulasMiembro.Any(cm => cm.CelulaId == celulaId) && c.Estado == EstadoConsultor.Activo)
             .OrderBy(c => c.Nombre)
             .ToListAsync();
 
-        return GenerarExcel(consultores, $"Consultores - {celula?.Nombre ?? "Célula"}");
+        return GenerarExcel(consultores, $"DataTeam - {celula?.Nombre ?? "Célula"}");
     }
 
     private byte[] GenerarExcel(List<Consultor> consultores, string nombreHoja)
@@ -48,62 +50,93 @@ public class ExcelService : IExcelService
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add(nombreHoja);
 
-        // Encabezados
-        worksheet.Cell(1, 1).Value = "Cédula";
-        worksheet.Cell(1, 2).Value = "Nombre";
-        worksheet.Cell(1, 3).Value = "Correo";
-        worksheet.Cell(1, 4).Value = "Cargo";
-        worksheet.Cell(1, 5).Value = "Célula";
-        worksheet.Cell(1, 6).Value = "Rol";
-        worksheet.Cell(1, 7).Value = "Capacidad (%)";
-        worksheet.Cell(1, 8).Value = "Empresa";
-        worksheet.Cell(1, 9).Value = "Fecha Ingreso";
-        worksheet.Cell(1, 10).Value = "Fecha Nacimiento";
-        worksheet.Cell(1, 11).Value = "Edad";
-        worksheet.Cell(1, 12).Value = "Dirección";
-        worksheet.Cell(1, 13).Value = "Barrio";
-        worksheet.Cell(1, 14).Value = "Celular";
-        worksheet.Cell(1, 15).Value = "Contacto Emergencia";
-        worksheet.Cell(1, 16).Value = "Estado";
+        // Configurar encabezados con los 10 campos requeridos por TH
+        var encabezados = new[]
+        {
+            "Cédula",
+            "Nombre",
+            "Cargo",
+            "Celular",
+            "Correo",
+            "Célula",
+            "Ciudad",
+            "Capacidad dentro del equipo",
+            "Rol dentro del equipo",
+            "Empresa"
+        };
 
-        // Aplicar estilo a encabezados
-        var headerRange = worksheet.Range(1, 1, 1, 16);
-        headerRange.Style.Font.Bold = true;
-        headerRange.Style.Fill.BackgroundColor = XLColor.LightBlue;
-        headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+        // Aplicar encabezados
+        for (int i = 0; i < encabezados.Length; i++)
+        {
+            var cell = worksheet.Cell(1, i + 1);
+            cell.Value = encabezados[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Font.FontSize = 12;
+            cell.Style.Font.FontColor = XLColor.White;
+            cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#28a745"); // Verde del tema
+            cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            cell.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+        }
 
         // Datos
         int row = 2;
         foreach (var consultor in consultores)
         {
+            // Obtener la primera célula asignada (o todas si tiene múltiples)
+            var celulas = consultor.CelulasMiembro
+                .Select(cm => cm.Celula?.Nombre ?? "")
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToList();
+            var celulaNombre = celulas.Any() ? string.Join(", ", celulas) : "Sin asignar";
+
+            // Obtener el rol de la primera célula (o múltiples)
+            var roles = consultor.CelulasMiembro
+                .Select(cm => cm.Rol ?? "")
+                .Where(r => !string.IsNullOrEmpty(r))
+                .ToList();
+            var rolNombre = roles.Any() ? string.Join(", ", roles) : "";
+
             worksheet.Cell(row, 1).Value = consultor.Cedula;
             worksheet.Cell(row, 2).Value = consultor.Nombre;
-            worksheet.Cell(row, 3).Value = consultor.Correo;
-            worksheet.Cell(row, 4).Value = consultor.Cargo;
-            worksheet.Cell(row, 5).Value = consultor.Celula?.Nombre ?? "";
-            worksheet.Cell(row, 6).Value = consultor.Rol ?? "";
-            worksheet.Cell(row, 7).Value = consultor.Capacidad?.ToString() ?? "";
-            worksheet.Cell(row, 8).Value = consultor.Empresa ?? "";
-            worksheet.Cell(row, 9).Value = consultor.FechaIngreso.ToString("dd/MM/yyyy");
-            worksheet.Cell(row, 10).Value = consultor.FechaNacimiento.ToString("dd/MM/yyyy");
-            worksheet.Cell(row, 11).Value = DateTime.Today.Year - consultor.FechaNacimiento.Year;
-            worksheet.Cell(row, 12).Value = consultor.Direccion ?? "";
-            worksheet.Cell(row, 13).Value = consultor.Barrio ?? "";
-            worksheet.Cell(row, 14).Value = consultor.Celular ?? "";
-            worksheet.Cell(row, 15).Value = consultor.ContactoEmergencia ?? "";
-            worksheet.Cell(row, 16).Value = consultor.Estado.ToString();
+            worksheet.Cell(row, 3).Value = consultor.Cargo;
+            worksheet.Cell(row, 4).Value = consultor.Celular ?? "";
+            worksheet.Cell(row, 5).Value = consultor.Correo;
+            worksheet.Cell(row, 6).Value = celulaNombre;
+            worksheet.Cell(row, 7).Value = "Bogotá"; // Por defecto, ajustar si tienes campo ciudad
+            worksheet.Cell(row, 8).Value = consultor.Capacidad.HasValue ? $"{consultor.Capacidad}%" : "100%";
+            worksheet.Cell(row, 9).Value = rolNombre;
+            worksheet.Cell(row, 10).Value = consultor.Empresa ?? "";
 
-            // Colorear según estado
-            if (consultor.Estado == EstadoConsultor.Retirado)
+            // Aplicar bordes y estilo alternado
+            var rowRange = worksheet.Range(row, 1, row, 10);
+            rowRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            rowRange.Style.Border.InsideBorder = XLBorderStyleValues.Hair;
+
+            // Filas alternadas
+            if (row % 2 == 0)
             {
-                worksheet.Range(row, 1, row, 16).Style.Fill.BackgroundColor = XLColor.LightGray;
+                rowRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#f8f9fa"); // Gris muy claro
             }
 
             row++;
         }
 
-        // Ajustar ancho de columnas
+        // Ajustar ancho de columnas automáticamente
         worksheet.Columns().AdjustToContents();
+
+        // Configurar ancho mínimo y máximo para mejor legibilidad
+        foreach (var column in worksheet.ColumnsUsed())
+        {
+            if (column.Width < 12) column.Width = 12;
+            if (column.Width > 50) column.Width = 50;
+        }
+
+        // Habilitar filtros automáticos
+        worksheet.RangeUsed().SetAutoFilter();
+
+        // Congelar la primera fila (encabezados)
+        worksheet.SheetView.FreezeRows(1);
 
         // Guardar en memoria
         using var stream = new MemoryStream();
