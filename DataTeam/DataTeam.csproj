@@ -36,6 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DOCS\" />
     <Folder Include="Utilities\" />
   </ItemGroup>
 
