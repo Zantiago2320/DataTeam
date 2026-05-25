@@ -1,6 +1,7 @@
 using DataTeam.Data;
 using DataTeam.Services;
 using DataTeam.Services.BackgroundJobs;
+using DataTeam.Middleware;
 using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -113,12 +114,13 @@ if (app.Environment.IsDevelopment())
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // SEGURIDAD: Usar middleware personalizado para manejo seguro de excepciones
+    app.UseMiddleware<SecureExceptionHandlerMiddleware>();
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-// Security Headers Middleware
+// SEGURIDAD: Security Headers Middleware
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");

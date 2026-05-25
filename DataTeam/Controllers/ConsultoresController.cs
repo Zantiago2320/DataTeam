@@ -34,6 +34,21 @@ public class ConsultoresController : Controller
     // GET: Consultores
     public async Task<IActionResult> Index(string? buscar, int? celulaId, EstadoConsultor? estado, string? cargo, string? ordenarPor)
     {
+        // SEGURIDAD: Validar parámetro de búsqueda para prevenir inyección
+        if (!string.IsNullOrWhiteSpace(buscar) && buscar.Length > 100)
+        {
+            _logger.LogWarning("Búsqueda rechazada por longitud excesiva: {Length}", buscar.Length);
+            ModelState.AddModelError("buscar", "El término de búsqueda es demasiado largo");
+            buscar = null;
+        }
+
+        // SEGURIDAD: Validar ID de célula
+        if (celulaId.HasValue && celulaId.Value < 0)
+        {
+            _logger.LogWarning("ID de célula inválido: {CelulaId}", celulaId.Value);
+            celulaId = null;
+        }
+
         var query = _context.Consultores
             .Include(c => c.Celula)
             .AsQueryable();
@@ -41,11 +56,13 @@ public class ConsultoresController : Controller
         // Filtrar por búsqueda
         if (!string.IsNullOrWhiteSpace(buscar))
         {
+            // SEGURIDAD: Sanitizar término de búsqueda
+            var buscarSanitizado = buscar.Trim();
             query = query.Where(c =>
-                c.Nombre.Contains(buscar) ||
-                c.Cedula.Contains(buscar) ||
-                c.Correo.Contains(buscar) ||
-                c.Cargo.Contains(buscar));
+                c.Nombre.Contains(buscarSanitizado) ||
+                c.Cedula.Contains(buscarSanitizado) ||
+                c.Correo.Contains(buscarSanitizado) ||
+                c.Cargo.Contains(buscarSanitizado));
         }
 
         // Filtrar por célula
@@ -63,11 +80,24 @@ public class ConsultoresController : Controller
         // Filtrar por cargo
         if (!string.IsNullOrWhiteSpace(cargo))
         {
-            query = query.Where(c => c.Cargo == cargo);
+            // SEGURIDAD: Validar longitud de cargo
+            var cargoSanitizado = cargo.Trim();
+            if (cargoSanitizado.Length <= 100)
+            {
+                query = query.Where(c => c.Cargo == cargoSanitizado);
+            }
+        }
+
+        // SEGURIDAD: Validar parámetro de ordenamiento contra lista permitida
+        var ordenamientosPermitidos = new[] { "celula", "estado", "cargo", "fecha_nuevo", "fecha_antiguo" };
+        if (!string.IsNullOrWhiteSpace(ordenarPor) && !ordenamientosPermitidos.Contains(ordenarPor.ToLowerInvariant()))
+        {
+            _logger.LogWarning("Ordenamiento inválido detectado: {Ordenamiento}", ordenarPor);
+            ordenarPor = null;
         }
 
         // Aplicar ordenamiento
-        query = ordenarPor switch
+        query = ordenarPor?.ToLowerInvariant() switch
         {
             "celula" => query.OrderBy(c => c.Celula!.Nombre).ThenBy(c => c.Nombre),
             "estado" => query.OrderBy(c => c.Estado).ThenBy(c => c.Nombre),
@@ -105,8 +135,10 @@ public class ConsultoresController : Controller
     // GET: Consultores/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null)
+        // SEGURIDAD: Validar ID
+        if (id == null || id.Value <= 0)
         {
+            _logger.LogWarning("Intento de acceder a detalles con ID inválido: {Id}", id);
             return NotFound();
         }
 

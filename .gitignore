@@ -58,3 +58,13 @@ $RECYCLE.BIN/
 **/appsettings.*.json
 !**/appsettings.json
 !**/appsettings.Development.json
+
+## Data files with sensitive information
+*.csv
+*.xlsx
+*.xls
+Backups/
+Data/Samples/
+
+## User Secrets
+**/secrets.json

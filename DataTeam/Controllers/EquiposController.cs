@@ -35,8 +35,10 @@ public class EquiposController : Controller
     // GET: Equipos/Details/5
     public async Task<IActionResult> Details(int? id)
     {
-        if (id == null)
+        // SEGURIDAD: Validar ID
+        if (id == null || id.Value <= 0)
         {
+            _logger.LogWarning("Intento de acceder a detalles de equipo con ID inválido: {Id}", id);
             return NotFound();
         }
 
@@ -66,6 +68,13 @@ public class EquiposController : Controller
     [Authorize(Roles = AppRoles.SuperAdmin)]
     public async Task<IActionResult> Create(Equipo equipo, List<int>? lideresIds)
     {
+        // SEGURIDAD: Validar lista de IDs de líderes
+        if (lideresIds != null && lideresIds.Any(id => id <= 0))
+        {
+            _logger.LogWarning("IDs de líderes inválidos detectados en creación de equipo");
+            ModelState.AddModelError("lideresIds", "Se detectaron IDs de líderes inválidos");
+        }
+
         if (ModelState.IsValid)
         {
             try
@@ -76,7 +85,7 @@ public class EquiposController : Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error al crear equipo");
+                _logger.LogError(ex, "Error al crear equipo {NombreEquipo}", equipo.Nombre);
                 ModelState.AddModelError("", "Error al crear el equipo. Por favor, intente nuevamente.");
             }
         }

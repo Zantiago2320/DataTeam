@@ -2,6 +2,8 @@ using DataTeam.Data;
 using DataTeam.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace DataTeam.Services;
 
@@ -11,17 +13,20 @@ public class DbInitializerService
     private readonly UserManager<IdentityUser> _userManager;
     private readonly RoleManager<IdentityRole> _roleManager;
     private readonly ILogger<DbInitializerService> _logger;
+    private readonly IConfiguration _configuration;
 
     public DbInitializerService(
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        ILogger<DbInitializerService> logger)
+        ILogger<DbInitializerService> logger,
+        IConfiguration configuration)
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public async Task InitializeAsync()
@@ -71,32 +76,81 @@ public class DbInitializerService
 
     private async Task CreateUsersAsync()
     {
+        // Generar contraseñas seguras solo en desarrollo/primera ejecución
+        var defaultPassword = GenerateSecurePassword();
+
         // Usuario 1: Super Admin (alex@apor.com)
-        await CreateUserWithRoleAsync(
+        var adminPassword = await CreateUserWithRoleAsync(
             "alex@apor.com",
-            "1234",
+            defaultPassword,
             AppRoles.SuperAdmin,
             "Alex Martínez"
         );
 
         // Usuario 2: Admin (admin@apor.com)
-        await CreateUserWithRoleAsync(
+        var adminPassword2 = await CreateUserWithRoleAsync(
             "admin@apor.com",
-            "1234",
+            defaultPassword,
             AppRoles.Admin,
             "Administrador Sistema"
         );
 
         // Usuario 3: User (user@apor.com)
-        await CreateUserWithRoleAsync(
+        var userPassword = await CreateUserWithRoleAsync(
             "user@apor.com",
-            "1234",
+            defaultPassword,
             AppRoles.User,
             "Usuario Lectura"
         );
+
+        // Log seguro: NO registrar contraseñas, solo indicar que se crearon usuarios
+        if (adminPassword != null || adminPassword2 != null || userPassword != null)
+        {
+            _logger.LogWarning("⚠️ USUARIOS INICIALES CREADOS. Por seguridad, cambie las contraseñas inmediatamente después del primer login.");
+        }
     }
 
-    private async Task CreateUserWithRoleAsync(string email, string password, string role, string displayName)
+    private string GenerateSecurePassword()
+    {
+        // Verificar si hay contraseña configurada en variables de entorno (producción)
+        var configPassword = _configuration["DefaultAdminPassword"];
+        if (!string.IsNullOrWhiteSpace(configPassword))
+        {
+            return configPassword;
+        }
+
+        // Generar contraseña aleatoria segura para desarrollo
+        const string upperChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string lowerChars = "abcdefghijklmnopqrstuvwxyz";
+        const string digitChars = "0123456789";
+        const string specialChars = "!@#$%^&*";
+
+        var password = new StringBuilder();
+
+        // Garantizar al menos un carácter de cada tipo (requisitos de Identity)
+        password.Append(GetRandomChar(upperChars));
+        password.Append(GetRandomChar(lowerChars));
+        password.Append(GetRandomChar(digitChars));
+        password.Append(GetRandomChar(specialChars));
+
+        // Rellenar hasta 16 caracteres con caracteres aleatorios
+        var allChars = upperChars + lowerChars + digitChars + specialChars;
+        for (int i = 4; i < 16; i++)
+        {
+            password.Append(GetRandomChar(allChars));
+        }
+
+        // Mezclar caracteres para evitar patrones predecibles
+        return new string(password.ToString().OrderBy(_ => RandomNumberGenerator.GetInt32(0, int.MaxValue)).ToArray());
+    }
+
+    private static char GetRandomChar(string chars)
+    {
+        var index = RandomNumberGenerator.GetInt32(0, chars.Length);
+        return chars[index];
+    }
+
+    private async Task<string?> CreateUserWithRoleAsync(string email, string password, string role, string displayName)
     {
         var user = await _userManager.FindByEmailAsync(email);
 
@@ -114,12 +168,12 @@ public class DbInitializerService
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, role);
-                _logger.LogInformation($"Usuario creado: {email} con rol {role}");
+                _logger.LogInformation("Usuario creado: {Email} con rol {Role}", email, role);
+                return password; // Retornar contraseña solo para logging inicial
             }
             else
             {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                _logger.LogError($"Error al crear usuario {email}: {errors}");
+                _logger.LogError("Error al crear usuario {Email}: {Errors}", email, string.Join(", ", result.Errors.Select(e => e.Description)));
             }
         }
         else
@@ -128,9 +182,11 @@ public class DbInitializerService
             if (!await _userManager.IsInRoleAsync(user, role))
             {
                 await _userManager.AddToRoleAsync(user, role);
-                _logger.LogInformation($"Rol {role} asignado a usuario existente: {email}");
+                _logger.LogInformation("Rol {Role} asignado a usuario existente: {Email}", role, email);
             }
         }
+
+        return null; // Usuario ya existía
     }
 
     private async Task CreateCelulasAsync()
