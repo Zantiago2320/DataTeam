@@ -29,10 +29,9 @@ namespace DataTeam.Areas.Identity.Pages.Account
 
         public class InputModel
         {
-            [Required(ErrorMessage = "El correo electrónico es requerido")]
-            [EmailAddress(ErrorMessage = "El formato del correo no es válido")]
-            [Display(Name = "Correo electrónico")]
-            public string Email { get; set; } = string.Empty;
+            [Required(ErrorMessage = "El usuario es requerido")]
+            [Display(Name = "Usuario")]
+            public string Email { get; set; } = string.Empty; // Mantener nombre "Email" por compatibilidad, pero ahora acepta username
 
             [Required(ErrorMessage = "La contraseña es requerida")]
             [DataType(DataType.Password)]
@@ -95,7 +94,7 @@ namespace DataTeam.Areas.Identity.Pages.Account
                 }
                 else
                 {
-                    ModelState.AddModelError(string.Empty, "Intento de inicio de sesión inválido. Verifica tu correo y contraseña.");
+                    ModelState.AddModelError(string.Empty, "Intento de inicio de sesión inválido. Verifica tu usuario y contraseña.");
                     return Page();
                 }
             }
