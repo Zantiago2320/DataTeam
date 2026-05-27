@@ -77,27 +77,29 @@ public class DbInitializerService
     private async Task CreateUsersAsync()
     {
         // ⚠️ CREDENCIALES DE PRUEBA - NO USAR EN PRODUCCIÓN
+        var username = "alexander";
         var testPassword = "1234";
 
         _logger.LogWarning("🔐 INICIALIZANDO USUARIOS DE PRUEBA...");
-        _logger.LogWarning("⚠️ USUARIO: alexander");
+        _logger.LogWarning("⚠️ USUARIO: {Username}", username);
         _logger.LogWarning("⚠️ CONTRASEÑA: {Password}", testPassword);
         _logger.LogWarning("⚠️ ESTO ES SOLO PARA DESARROLLO/PRUEBAS");
 
         // Usuario SuperAdmin: alexander con contraseña 1234
-        var adminCreated = await CreateUserWithRoleAsync(
-            "alexander@apor.com",
+        var adminCreated = await CreateSimpleUserAsync(
+            username,
             testPassword,
             AppRoles.SuperAdmin,
-            "Alexander"
+            "Alexander Castro"
         );
 
-        if (adminCreated != null)
+        if (adminCreated)
         {
             _logger.LogWarning("✅ USUARIO SUPERADMIN CREADO:");
-            _logger.LogWarning("   📧 Email: alexander@apor.com");
-            _logger.LogWarning("   👤 Nombre de usuario: alexander");
+            _logger.LogWarning("   👤 Nombre de usuario: {Username}", username);
             _logger.LogWarning("   🔑 Contraseña: {Password}", testPassword);
+            _logger.LogWarning("   👑 Rol: SuperAdmin");
+            _logger.LogWarning("⚠️ Para iniciar sesión use: {Username}", username);
             _logger.LogWarning("⚠️ RECUERDE: Esta es una configuración de prueba NO segura");
         }
     }
@@ -140,6 +142,45 @@ public class DbInitializerService
     {
         var index = RandomNumberGenerator.GetInt32(0, chars.Length);
         return chars[index];
+    }
+
+    private async Task<bool> CreateSimpleUserAsync(string username, string password, string role, string displayName)
+    {
+        var user = await _userManager.FindByNameAsync(username);
+
+        if (user == null)
+        {
+            user = new IdentityUser
+            {
+                UserName = username,
+                Email = null, // No requerir email para usuario de prueba
+                EmailConfirmed = false
+            };
+
+            var result = await _userManager.CreateAsync(user, password);
+
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, role);
+                _logger.LogInformation("Usuario creado: {Username} con rol {Role}", username, role);
+                return true;
+            }
+            else
+            {
+                _logger.LogError("Error al crear usuario {Username}: {Errors}", username, string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
+            }
+        }
+        else
+        {
+            // Asegurar que el usuario tenga el rol correcto
+            if (!await _userManager.IsInRoleAsync(user, role))
+            {
+                await _userManager.AddToRoleAsync(user, role);
+                _logger.LogInformation("Rol {Role} asignado a usuario existente: {Username}", role, username);
+            }
+            return false; // Usuario ya existía
+        }
     }
 
     private async Task<string?> CreateUserWithRoleAsync(string email, string password, string role, string displayName)

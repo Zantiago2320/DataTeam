@@ -21,11 +21,12 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => 
 {
     options.SignIn.RequireConfirmedAccount = false; // Permitir login sin confirmar email en desarrollo
-    options.Password.RequireDigit = true; // Mejorar seguridad de contraseñas
-    options.Password.RequiredLength = 8;
-    options.Password.RequireNonAlphanumeric = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequireLowercase = true;
+    options.User.RequireUniqueEmail = false; // Permitir usuarios sin email para pruebas
+    options.Password.RequireDigit = false; // ⚠️ SOLO PARA DESARROLLO - Permitir contraseñas simples
+    options.Password.RequiredLength = 4;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireLowercase = false;
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
