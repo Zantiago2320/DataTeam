@@ -48,6 +48,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Rate Limiting
 builder.Services.AddRateLimiter(options =>
 {
+    // Política global por defecto
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.User?.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
@@ -58,6 +59,15 @@ builder.Services.AddRateLimiter(options =>
                 QueueLimit = 0,
                 Window = TimeSpan.FromMinutes(1)
             }));
+
+    // Política nombrada "fixed" para endpoints específicos
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 100;
+        limiterOptions.Window = TimeSpan.FromMinutes(1);
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0;
+    });
 
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });

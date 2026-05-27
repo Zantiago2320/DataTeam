@@ -1,0 +1,206 @@
+@model IEnumerable<DataTeam.Models.HistorialEnvioExcel>
+
+@{
+    ViewData["Title"] = "Historial de Envíos de Excel";
+    var currentPage = ViewBag.CurrentPage as int? ?? 1;
+    var totalPaginas = ViewBag.TotalPages as int? ?? 1;
+    var totalRegistros = ViewBag.TotalRegistros as int? ?? 0;
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="bi bi-clock-history"></i>
+            Historial de Envíos de Excel
+        </h2>
+        <div>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Volver a Consultores
+            </a>
+            <a asp-action="EnviarExcel" class="btn btn-success">
+                <i class="bi bi-envelope-plus-fill"></i> Nuevo Envío
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow">
+        <div class="card-header" style="background: linear-gradient(135deg, #2E7D32 0%, #66BB6A 100%); color: white;">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-table"></i>
+                    Total de envíos registrados: <strong>@totalRegistros</strong>
+                </span>
+                <span>
+                    Página @currentPage de @totalPaginas
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            @if (Model != null && Model.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Destinatario</th>
+                                <th>Asunto</th>
+                                <th>Archivo</th>
+                                <th>Registros</th>
+                                <th>Filtro</th>
+                                <th>Usuario</th>
+                                <th class="text-center">Estado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var envio in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <small>
+                                            @envio.FechaEnvio.ToString("dd/MM/yyyy")<br />
+                                            <span class="text-muted">@envio.FechaEnvio.ToString("HH:mm")</span>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <strong>@envio.DestinatarioEmail</strong>
+                                        @if (!string.IsNullOrWhiteSpace(envio.DestinatarioNombre))
+                                        {
+                                            <br /><small class="text-muted">@envio.DestinatarioNombre</small>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small>@envio.Asunto</small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            <i class="bi bi-file-earmark-excel-fill text-success"></i>
+                                            @envio.NombreArchivo<br />
+                                            <span class="text-muted">@((envio.TamanoArchivo / 1024).ToString("N0")) KB</span>
+                                        </small>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">@envio.CantidadRegistros</span>
+                                    </td>
+                                    <td>
+                                        <small>@envio.TipoFiltro</small>
+                                    </td>
+                                    <td>
+                                        <small>@envio.UsuarioEnvio</small>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (envio.EnvioExitoso)
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle-fill"></i> Exitoso
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger" 
+                                                  data-bs-toggle="tooltip" 
+                                                  title="@envio.MensajeError">
+                                                <i class="bi bi-x-circle-fill"></i> Fallido
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (envio.ArchivoBytes != null && envio.ArchivoBytes.Length > 0)
+                                        {
+                                            <a asp-action="DescargarExcelHistorial" 
+                                               asp-route-id="@envio.Id" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Descargar archivo">
+                                                <i class="bi bi-download"></i>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" disabled title="Archivo no almacenado">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @* Paginación *@
+                @if (totalPaginas > 1)
+                {
+                    <div class="card-footer">
+                        <nav>
+                            <ul class="pagination justify-content-center mb-0">
+                                @if (currentPage > 1)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" asp-action="HistorialEnvios" asp-route-pageNumber="@(currentPage - 1)">
+                                            <i class="bi bi-chevron-left"></i> Anterior
+                                        </a>
+                                    </li>
+                                }
+
+                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPaginas, currentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link" asp-action="HistorialEnvios" asp-route-pageNumber="@i">@i</a>
+                                    </li>
+                                }
+
+                                @if (currentPage < totalPaginas)
+                                {
+                                    <li class="page-item">
+                                        <a class="page-link" asp-action="HistorialEnvios" asp-route-pageNumber="@(currentPage + 1)">
+                                            Siguiente <i class="bi bi-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                }
+                            </ul>
+                        </nav>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="text-muted mt-3">No hay envíos registrados en el historial</p>
+                    <a asp-action="EnviarExcel" class="btn btn-success">
+                        <i class="bi bi-envelope-plus-fill"></i> Enviar Primer Excel
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Activar tooltips de Bootstrap
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+}

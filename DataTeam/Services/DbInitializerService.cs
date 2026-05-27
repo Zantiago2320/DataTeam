@@ -79,6 +79,10 @@ public class DbInitializerService
         // Generar contraseñas seguras solo en desarrollo/primera ejecución
         var defaultPassword = GenerateSecurePassword();
 
+        _logger.LogWarning("🔐 INICIALIZANDO USUARIOS DEL SISTEMA...");
+        _logger.LogWarning("⚠️ CONTRASEÑA TEMPORAL: {Password}", defaultPassword);
+        _logger.LogWarning("⚠️ Debe cambiarla después del primer login");
+
         // Usuario 1: Super Admin (alex@apor.com)
         var adminPassword = await CreateUserWithRoleAsync(
             "alex@apor.com",
@@ -103,10 +107,15 @@ public class DbInitializerService
             "Usuario Lectura"
         );
 
-        // Log seguro: NO registrar contraseñas, solo indicar que se crearon usuarios
+        // Log final con instrucciones
         if (adminPassword != null || adminPassword2 != null || userPassword != null)
         {
-            _logger.LogWarning("⚠️ USUARIOS INICIALES CREADOS. Por seguridad, cambie las contraseñas inmediatamente después del primer login.");
+            _logger.LogWarning("✅ USUARIOS CREADOS:");
+            if (adminPassword != null) _logger.LogWarning("   📧 alex@apor.com (SuperAdmin)");
+            if (adminPassword2 != null) _logger.LogWarning("   📧 admin@apor.com (Admin)");
+            if (userPassword != null) _logger.LogWarning("   📧 user@apor.com (User)");
+            _logger.LogWarning("   🔑 Contraseña: {Password}", defaultPassword);
+            _logger.LogWarning("⚠️ IMPORTANTE: Cambie estas contraseñas después del primer login");
         }
     }
 

@@ -1,4 +1,4 @@
-﻿using DataTeam.Models;
+using DataTeam.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,6 +20,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<LicenciaCopilot> LicenciasCopilot { get; set; }
     public DbSet<Novedad> Novedades { get; set; }
     public DbSet<ContactoFabrica> ContactosFabricas { get; set; }
+    public DbSet<HistorialEnvioExcel> HistorialEnviosExcel { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

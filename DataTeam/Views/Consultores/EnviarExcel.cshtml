@@ -1,0 +1,172 @@
+@{
+    ViewData["Title"] = "Enviar Excel por Correo";
+    var celulaId = ViewBag.CelulaId as int?;
+    var celulaNombre = ViewBag.CelulaNombre as string;
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header" style="background: linear-gradient(135deg, #2E7D32 0%, #66BB6A 100%); color: white;">
+                    <h4 class="mb-0">
+                        <i class="bi bi-envelope-fill"></i>
+                        Enviar Excel por Correo
+                    </h4>
+                </div>
+                <div class="card-body">
+                    @if (celulaId.HasValue)
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Se enviará el Excel filtrado para la célula: <strong>@celulaNombre</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            Se enviará el Excel con <strong>todos los consultores</strong>
+                        </div>
+                    }
+
+                    <form asp-action="EnviarExcel" method="post">
+                        @if (celulaId.HasValue)
+                        {
+                            <input type="hidden" name="celulaId" value="@celulaId.Value" />
+                        }
+
+                        <div class="mb-3">
+                            <label for="destinatarioEmail" class="form-label">
+                                Correo Electrónico del Destinatario <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="destinatarioEmail" 
+                                   name="destinatarioEmail" 
+                                   required 
+                                   placeholder="ejemplo@empresa.com">
+                            <div class="form-text">
+                                El Excel se enviará a este correo electrónico
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="destinatarioNombre" class="form-label">
+                                Nombre del Destinatario (opcional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="destinatarioNombre" 
+                                   name="destinatarioNombre" 
+                                   placeholder="Nombre completo del destinatario">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="asunto" class="form-label">
+                                Asunto del Correo <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="asunto" 
+                                   name="asunto" 
+                                   required 
+                                   maxlength="500"
+                                   value="Exportación de Consultores DataTeam - @DateTime.Now.ToString("dd-MM-yyyy")">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="mensaje" class="form-label">
+                                Mensaje del Correo <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" 
+                                      id="mensaje" 
+                                      name="mensaje" 
+                                      rows="5" 
+                                      required 
+                                      maxlength="2000"
+                                      placeholder="Escriba el mensaje que acompañará al archivo Excel adjunto...">Adjunto encontrará el archivo Excel con la información actualizada de consultores del sistema DataTeam.
+
+Por favor, confirme la recepción del archivo.
+
+Saludos cordiales.</textarea>
+                            <div class="form-text">
+                                Este mensaje aparecerá en el cuerpo del correo
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       id="guardarArchivo" 
+                                       name="guardarArchivo" 
+                                       value="true">
+                                <label class="form-check-label" for="guardarArchivo">
+                                    Guardar archivo en historial
+                                </label>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i>
+                                    Si activa esta opción, podrá descargar el archivo desde el historial posteriormente
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Index" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-send-fill"></i> Enviar Correo
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6><i class="bi bi-lightbulb-fill text-warning"></i> Información importante:</h6>
+                        <ul class="mb-0">
+                            <li>El archivo Excel se generará automáticamente al momento del envío</li>
+                            <li>El destinatario recibirá el archivo como adjunto en el correo</li>
+                            <li>Se guardará un registro del envío en el historial</li>
+                            <li>Solo los usuarios SuperAdmin pueden enviar estos correos</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Validación adicional del formulario
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const email = document.getElementById('destinatarioEmail').value;
+            const mensaje = document.getElementById('mensaje').value;
+
+            if (!email.includes('@@')) {
+                e.preventDefault();
+                alert('Por favor, ingrese un correo electrónico válido');
+                return false;
+            }
+
+            if (mensaje.trim().length < 10) {
+                e.preventDefault();
+                alert('El mensaje debe tener al menos 10 caracteres');
+                return false;
+            }
+
+            // Confirmación antes de enviar
+            if (!confirm('¿Está seguro que desea enviar el Excel a ' + email + '?')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+}

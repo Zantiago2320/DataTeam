@@ -22,6 +22,15 @@
                     <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
                 </a>
             }
+            @if (User.IsInRole("SuperAdmin"))
+            {
+                <a asp-action="EnviarExcel" class="btn btn-outline-primary btn-lg shadow ms-2">
+                    <i class="bi bi-envelope-fill"></i> Enviar por Correo
+                </a>
+                <a asp-action="HistorialEnvios" class="btn btn-outline-secondary btn-lg shadow ms-2">
+                    <i class="bi bi-clock-history"></i> Historial
+                </a>
+            }
         </div>
         @if (User.IsInRole("SuperAdmin"))
         {

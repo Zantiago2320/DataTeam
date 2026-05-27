@@ -15,6 +15,7 @@ public class ConsultoresController : Controller
     private readonly IFileService _fileService;
     private readonly IAuditoriaService _auditoriaService;
     private readonly IExcelService _excelService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<ConsultoresController> _logger;
 
     public ConsultoresController(
@@ -22,12 +23,14 @@ public class ConsultoresController : Controller
         IFileService fileService,
         IAuditoriaService auditoriaService,
         IExcelService excelService,
+        IEmailService emailService,
         ILogger<ConsultoresController> logger)
     {
         _context = context;
         _fileService = fileService;
         _auditoriaService = auditoriaService;
         _excelService = excelService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -654,6 +657,187 @@ public class ConsultoresController : Controller
             TempData["Error"] = "Error al generar el archivo Excel";
             return RedirectToAction(nameof(Index));
         }
+    }
+
+    // GET: Consultores/EnviarExcel
+    [Authorize(Roles = AppRoles.SuperAdmin)]
+    public async Task<IActionResult> EnviarExcel(int? celulaId)
+    {
+        ViewBag.CelulaId = celulaId;
+
+        // Cargar célula si se especificó
+        if (celulaId.HasValue && celulaId.Value > 0)
+        {
+            var celula = await _context.Celulas.FindAsync(celulaId.Value);
+            ViewBag.CelulaNombre = celula?.Nombre;
+        }
+
+        return View();
+    }
+
+    // POST: Consultores/EnviarExcel
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Authorize(Roles = AppRoles.SuperAdmin)]
+    public async Task<IActionResult> EnviarExcel(string destinatarioEmail, string? destinatarioNombre, string asunto, string mensaje, int? celulaId, bool guardarArchivo = false)
+    {
+        try
+        {
+            // SEGURIDAD: Validar email
+            if (string.IsNullOrWhiteSpace(destinatarioEmail) || !destinatarioEmail.Contains("@"))
+            {
+                TempData["Error"] = "Debe proporcionar un correo electrónico válido";
+                return RedirectToAction(nameof(EnviarExcel), new { celulaId });
+            }
+
+            // Generar Excel
+            byte[] excelBytes;
+            string fileName;
+            string tipoFiltro;
+
+            if (celulaId.HasValue && celulaId.Value > 0)
+            {
+                excelBytes = await _excelService.ExportarConsultoresPorCelulaAsync(celulaId.Value);
+                var celula = await _context.Celulas.FindAsync(celulaId.Value);
+                fileName = $"Consultores_{celula?.Nombre}_{DateTime.Now:yyyyMMdd}.xlsx";
+                tipoFiltro = "Celula";
+            }
+            else
+            {
+                excelBytes = await _excelService.ExportarConsultoresAsync();
+                fileName = $"Consultores_Todos_{DateTime.Now:yyyyMMdd}.xlsx";
+                tipoFiltro = "Todos";
+            }
+
+            // Contar registros en el Excel (aproximación basada en consultores activos)
+            var cantidadRegistros = celulaId.HasValue 
+                ? await _context.Consultores.CountAsync(c => c.CelulaId == celulaId.Value && !c.Eliminado)
+                : await _context.Consultores.CountAsync(c => !c.Eliminado);
+
+            // Preparar cuerpo del correo
+            var cuerpoHtml = $@"
+<html>
+<body style='font-family: Arial, sans-serif;'>
+    <h2 style='color: #2E7D32;'>Exportación de Consultores - DataTeam</h2>
+    <p>{mensaje}</p>
+    <p><strong>Archivo adjunto:</strong> {fileName}</p>
+    <p><strong>Cantidad de registros:</strong> {cantidadRegistros}</p>
+    <p><strong>Fecha de generación:</strong> {DateTime.Now:dd/MM/yyyy HH:mm}</p>
+    <hr style='border: 1px solid #ddd;' />
+    <p style='color: #666; font-size: 12px;'>
+        Este correo fue enviado automáticamente por el sistema DataTeam.<br/>
+        Usuario: {User.Identity?.Name ?? "Desconocido"}
+    </p>
+</body>
+</html>";
+
+            // Enviar correo
+            bool envioExitoso = false;
+            string? mensajeError = null;
+
+            try
+            {
+                await _emailService.EnviarExcelPorCorreoAsync(
+                    destinatarioEmail,
+                    asunto,
+                    cuerpoHtml,
+                    excelBytes,
+                    fileName
+                );
+                envioExitoso = true;
+            }
+            catch (Exception emailEx)
+            {
+                mensajeError = emailEx.Message;
+                _logger.LogError(emailEx, "Error al enviar correo con Excel a {Email}", destinatarioEmail);
+            }
+
+            // Registrar en historial
+            var historial = new HistorialEnvioExcel
+            {
+                DestinatarioEmail = destinatarioEmail,
+                DestinatarioNombre = destinatarioNombre,
+                Asunto = asunto,
+                Mensaje = mensaje,
+                NombreArchivo = fileName,
+                TamanoArchivo = excelBytes.Length,
+                CantidadRegistros = cantidadRegistros,
+                FechaEnvio = DateTime.Now,
+                UsuarioEnvio = User.Identity?.Name ?? "Desconocido",
+                EnvioExitoso = envioExitoso,
+                MensajeError = mensajeError,
+                TipoFiltro = tipoFiltro,
+                CelulaIdFiltro = celulaId,
+                ArchivoBytes = guardarArchivo ? excelBytes : null // Solo guardar si se solicitó
+            };
+
+            _context.HistorialEnviosExcel.Add(historial);
+            await _context.SaveChangesAsync();
+
+            if (envioExitoso)
+            {
+                TempData["Success"] = $"Excel enviado exitosamente a {destinatarioEmail}";
+            }
+            else
+            {
+                TempData["Error"] = $"Error al enviar correo: {mensajeError}. El registro se guardó en el historial.";
+            }
+
+            return RedirectToAction(nameof(HistorialEnvios));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al procesar envío de Excel por correo");
+            TempData["Error"] = "Error al procesar el envío del Excel";
+            return RedirectToAction(nameof(EnviarExcel), new { celulaId });
+        }
+    }
+
+    // GET: Consultores/HistorialEnvios
+    [Authorize(Roles = AppRoles.SuperAdmin)]
+    public async Task<IActionResult> HistorialEnvios(int? pageNumber)
+    {
+        const int pageSize = 20;
+        var currentPage = pageNumber ?? 1;
+
+        var historialQuery = _context.HistorialEnviosExcel
+            .OrderByDescending(h => h.FechaEnvio)
+            .AsQueryable();
+
+        var totalRegistros = await historialQuery.CountAsync();
+        var totalPaginas = (int)Math.Ceiling(totalRegistros / (double)pageSize);
+
+        var historial = await historialQuery
+            .Skip((currentPage - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        ViewBag.CurrentPage = currentPage;
+        ViewBag.TotalPages = totalPaginas;
+        ViewBag.TotalRegistros = totalRegistros;
+
+        return View(historial);
+    }
+
+    // GET: Consultores/DescargarExcelHistorial/5
+    [Authorize(Roles = AppRoles.SuperAdmin)]
+    public async Task<IActionResult> DescargarExcelHistorial(int id)
+    {
+        var historial = await _context.HistorialEnviosExcel.FindAsync(id);
+
+        if (historial == null)
+        {
+            TempData["Error"] = "Registro de historial no encontrado";
+            return RedirectToAction(nameof(HistorialEnvios));
+        }
+
+        if (historial.ArchivoBytes == null || historial.ArchivoBytes.Length == 0)
+        {
+            TempData["Error"] = "El archivo no fue almacenado en el historial";
+            return RedirectToAction(nameof(HistorialEnvios));
+        }
+
+        return File(historial.ArchivoBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", historial.NombreArchivo);
     }
 
     // GET: Consultores/AsignarCelula/5
