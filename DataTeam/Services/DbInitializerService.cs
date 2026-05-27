@@ -76,46 +76,29 @@ public class DbInitializerService
 
     private async Task CreateUsersAsync()
     {
-        // Generar contraseñas seguras solo en desarrollo/primera ejecución
-        var defaultPassword = GenerateSecurePassword();
+        // ⚠️ CREDENCIALES DE PRUEBA - NO USAR EN PRODUCCIÓN
+        var testPassword = "1234";
 
-        _logger.LogWarning("🔐 INICIALIZANDO USUARIOS DEL SISTEMA...");
-        _logger.LogWarning("⚠️ CONTRASEÑA TEMPORAL: {Password}", defaultPassword);
-        _logger.LogWarning("⚠️ Debe cambiarla después del primer login");
+        _logger.LogWarning("🔐 INICIALIZANDO USUARIOS DE PRUEBA...");
+        _logger.LogWarning("⚠️ USUARIO: alexander");
+        _logger.LogWarning("⚠️ CONTRASEÑA: {Password}", testPassword);
+        _logger.LogWarning("⚠️ ESTO ES SOLO PARA DESARROLLO/PRUEBAS");
 
-        // Usuario 1: Super Admin (alex@apor.com)
-        var adminPassword = await CreateUserWithRoleAsync(
-            "alex@apor.com",
-            defaultPassword,
+        // Usuario SuperAdmin: alexander con contraseña 1234
+        var adminCreated = await CreateUserWithRoleAsync(
+            "alexander@apor.com",
+            testPassword,
             AppRoles.SuperAdmin,
-            "Alex Martínez"
+            "Alexander"
         );
 
-        // Usuario 2: Admin (admin@apor.com)
-        var adminPassword2 = await CreateUserWithRoleAsync(
-            "admin@apor.com",
-            defaultPassword,
-            AppRoles.Admin,
-            "Administrador Sistema"
-        );
-
-        // Usuario 3: User (user@apor.com)
-        var userPassword = await CreateUserWithRoleAsync(
-            "user@apor.com",
-            defaultPassword,
-            AppRoles.User,
-            "Usuario Lectura"
-        );
-
-        // Log final con instrucciones
-        if (adminPassword != null || adminPassword2 != null || userPassword != null)
+        if (adminCreated != null)
         {
-            _logger.LogWarning("✅ USUARIOS CREADOS:");
-            if (adminPassword != null) _logger.LogWarning("   📧 alex@apor.com (SuperAdmin)");
-            if (adminPassword2 != null) _logger.LogWarning("   📧 admin@apor.com (Admin)");
-            if (userPassword != null) _logger.LogWarning("   📧 user@apor.com (User)");
-            _logger.LogWarning("   🔑 Contraseña: {Password}", defaultPassword);
-            _logger.LogWarning("⚠️ IMPORTANTE: Cambie estas contraseñas después del primer login");
+            _logger.LogWarning("✅ USUARIO SUPERADMIN CREADO:");
+            _logger.LogWarning("   📧 Email: alexander@apor.com");
+            _logger.LogWarning("   👤 Nombre de usuario: alexander");
+            _logger.LogWarning("   🔑 Contraseña: {Password}", testPassword);
+            _logger.LogWarning("⚠️ RECUERDE: Esta es una configuración de prueba NO segura");
         }
     }
 
@@ -165,9 +148,12 @@ public class DbInitializerService
 
         if (user == null)
         {
+            // Extraer username del email (parte antes del @) o usar displayName
+            var username = displayName.ToLowerInvariant().Replace(" ", "");
+
             user = new IdentityUser
             {
-                UserName = email,
+                UserName = username, // Usar nombre corto en lugar del email
                 Email = email,
                 EmailConfirmed = true
             };
@@ -177,7 +163,7 @@ public class DbInitializerService
             if (result.Succeeded)
             {
                 await _userManager.AddToRoleAsync(user, role);
-                _logger.LogInformation("Usuario creado: {Email} con rol {Role}", email, role);
+                _logger.LogInformation("Usuario creado: {Username} ({Email}) con rol {Role}", username, email, role);
                 return password; // Retornar contraseña solo para logging inicial
             }
             else
