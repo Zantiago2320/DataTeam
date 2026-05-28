@@ -6,12 +6,12 @@
 
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-8 offset-md-2">
+        <div class="col-md-10 offset-md-1">
             <div class="card shadow">
                 <div class="card-header" style="background: linear-gradient(135deg, #2E7D32 0%, #66BB6A 100%); color: white;">
                     <h4 class="mb-0">
                         <i class="bi bi-envelope-fill"></i>
-                        Enviar Excel por Correo
+                        Enviar Excel por Correo - Destinatarios Múltiples
                     </h4>
                 </div>
                 <div class="card-body">
@@ -30,41 +30,52 @@
                         </div>
                     }
 
-                    <form asp-action="EnviarExcel" method="post">
+                    <form asp-action="EnviarExcel" method="post" id="formEnviarExcel">
                         @if (celulaId.HasValue)
                         {
-                            <input type="hidden" name="celulaId" value="@celulaId.Value" />
+                            <input type="hidden" name="celulaId" value="@celulaId.Value" id="hdnCelulaId" />
                         }
+                        <input type="hidden" name="destinatariosJson" id="destinatariosJson" />
 
-                        <div class="mb-3">
-                            <label for="destinatarioEmail" class="form-label">
-                                Correo Electrónico del Destinatario <span class="text-danger">*</span>
+                        <!-- Gestión de Destinatarios -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-people-fill"></i> Destinatarios <span class="text-danger">*</span>
                             </label>
-                            <input type="email" 
-                                   class="form-control" 
-                                   id="destinatarioEmail" 
-                                   name="destinatarioEmail" 
-                                   required 
-                                   placeholder="ejemplo@empresa.com">
+
+                            <div class="input-group mb-2">
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="nuevoDestinatario" 
+                                       placeholder="ejemplo@empresa.com">
+                                <button type="button" class="btn btn-primary" id="btnAgregarDestinatario">
+                                    <i class="bi bi-plus-circle"></i> Agregar
+                                </button>
+                            </div>
+
+                            <!-- Chips de destinatarios -->
+                            <div id="chipsDestinatarios" class="border rounded p-3 bg-light" style="min-height: 80px;">
+                                <small class="text-muted">Agregue uno o más destinatarios</small>
+                            </div>
                             <div class="form-text">
-                                El Excel se enviará a este correo electrónico
+                                <i class="bi bi-info-circle"></i> Total de destinatarios: <strong id="countDestinatarios">0</strong>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label for="destinatarioNombre" class="form-label">
-                                Nombre del Destinatario (opcional)
+                                <i class="bi bi-person"></i> Nombre del Remitente/Grupo (opcional)
                             </label>
                             <input type="text" 
                                    class="form-control" 
                                    id="destinatarioNombre" 
                                    name="destinatarioNombre" 
-                                   placeholder="Nombre completo del destinatario">
+                                   placeholder="Ej: Equipo de Gestión Humana">
                         </div>
 
                         <div class="mb-3">
                             <label for="asunto" class="form-label">
-                                Asunto del Correo <span class="text-danger">*</span>
+                                <i class="bi bi-tag-fill"></i> Asunto del Correo <span class="text-danger">*</span>
                             </label>
                             <input type="text" 
                                    class="form-control" 
@@ -77,12 +88,12 @@
 
                         <div class="mb-3">
                             <label for="mensaje" class="form-label">
-                                Mensaje del Correo <span class="text-danger">*</span>
+                                <i class="bi bi-chat-left-text"></i> Mensaje del Correo <span class="text-danger">*</span>
                             </label>
                             <textarea class="form-control" 
                                       id="mensaje" 
                                       name="mensaje" 
-                                      rows="5" 
+                                      rows="6" 
                                       required 
                                       maxlength="2000"
                                       placeholder="Escriba el mensaje que acompañará al archivo Excel adjunto...">Adjunto encontrará el archivo Excel con la información actualizada de consultores del sistema DataTeam.
@@ -103,41 +114,70 @@ Saludos cordiales.</textarea>
                                        name="guardarArchivo" 
                                        value="true">
                                 <label class="form-check-label" for="guardarArchivo">
-                                    Guardar archivo en historial
+                                    <i class="bi bi-save"></i> Guardar copia del archivo en el historial
                                 </label>
                                 <div class="form-text">
-                                    <i class="bi bi-info-circle"></i>
-                                    Si activa esta opción, podrá descargar el archivo desde el historial posteriormente
+                                    Permite re-descargar el archivo desde el historial
                                 </div>
                             </div>
                         </div>
 
-                        <hr />
+                        <hr class="my-4" />
 
-                        <div class="d-flex justify-content-between">
-                            <a asp-action="Index" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-send-fill"></i> Enviar Correo
-                            </button>
+                        <div class="d-flex gap-2 justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-info" id="btnPrevisualizar">
+                                    <i class="bi bi-eye-fill"></i> Previsualizar Excel
+                                </button>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Index" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-send-fill"></i> Enviar Correo
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <div class="mt-3">
-                <div class="card">
-                    <div class="card-body">
-                        <h6><i class="bi bi-lightbulb-fill text-warning"></i> Información importante:</h6>
-                        <ul class="mb-0">
-                            <li>El archivo Excel se generará automáticamente al momento del envío</li>
-                            <li>El destinatario recibirá el archivo como adjunto en el correo</li>
-                            <li>Se guardará un registro del envío en el historial</li>
-                            <li>Solo los usuarios SuperAdmin pueden enviar estos correos</li>
-                        </ul>
+<!-- Modal de Previsualización -->
+<div class="modal fade" id="modalPreview" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye"></i> Previsualización del Excel
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="previewLoading" class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
                     </div>
+                    <p class="mt-3">Generando previsualización...</p>
                 </div>
+                <div id="previewContent" style="display: none;">
+                    <div class="alert alert-info">
+                        <strong id="previewTotalFilas"></strong> registros totales | 
+                        Tamaño: <strong id="previewTamano"></strong> | 
+                        Generado: <strong id="previewFecha"></strong>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped table-hover" id="previewTable">
+                            <thead class="table-dark"></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted"><small>Mostrando primeras 20 filas</small></p>
+                </div>
+                <div id="previewError" class="alert alert-danger" style="display: none;"></div>
             </div>
         </div>
     </div>
@@ -145,28 +185,151 @@ Saludos cordiales.</textarea>
 
 @section Scripts {
     <script>
-        // Validación adicional del formulario
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const email = document.getElementById('destinatarioEmail').value;
-            const mensaje = document.getElementById('mensaje').value;
+        let destinatarios = [];
 
-            if (!email.includes('@@')) {
+        // Agregar destinatario
+        document.getElementById('btnAgregarDestinatario').addEventListener('click', function() {
+            const email = document.getElementById('nuevoDestinatario').value.trim();
+
+            if (!email) {
+                alert('Ingrese un correo electrónico');
+                return;
+            }
+
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailRegex.test(email)) {
+                alert('Formato de correo inválido');
+                return;
+            }
+
+            if (destinatarios.includes(email)) {
+                alert('Este correo ya está en la lista');
+                return;
+            }
+
+            destinatarios.push(email);
+            actualizarChips();
+            document.getElementById('nuevoDestinatario').value = '';
+        });
+
+        // Permitir agregar con Enter
+        document.getElementById('nuevoDestinatario').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                alert('Por favor, ingrese un correo electrónico válido');
+                document.getElementById('btnAgregarDestinatario').click();
+            }
+        });
+
+        function actualizarChips() {
+            const container = document.getElementById('chipsDestinatarios');
+
+            if (destinatarios.length === 0) {
+                container.innerHTML = '<small class="text-muted">Agregue uno o más destinatarios</small>';
+            } else {
+                container.innerHTML = destinatarios.map((email, index) => `
+                    <span class="badge bg-primary me-2 mb-2 p-2" style="font-size: 0.9rem;">
+                        <i class="bi bi-envelope"></i> ${email}
+                        <button type="button" class="btn-close btn-close-white ms-2" 
+                                style="font-size: 0.7rem;" 
+                                onclick="eliminarDestinatario(${index})"></button>
+                    </span>
+                `).join('');
+            }
+
+            document.getElementById('countDestinatarios').textContent = destinatarios.length;
+            document.getElementById('destinatariosJson').value = JSON.stringify(destinatarios);
+        }
+
+        function eliminarDestinatario(index) {
+            destinatarios.splice(index, 1);
+            actualizarChips();
+        }
+
+        // Validación al enviar
+        document.getElementById('formEnviarExcel').addEventListener('submit', function(e) {
+            if (destinatarios.length === 0) {
+                e.preventDefault();
+                alert('Debe agregar al menos un destinatario');
                 return false;
             }
 
-            if (mensaje.trim().length < 10) {
-                e.preventDefault();
-                alert('El mensaje debe tener al menos 10 caracteres');
-                return false;
-            }
+            const confirmText = destinatarios.length === 1 
+                ? `¿Enviar el Excel a ${destinatarios[0]}?`
+                : `¿Enviar el Excel a ${destinatarios.length} destinatarios?`;
 
-            // Confirmación antes de enviar
-            if (!confirm('¿Está seguro que desea enviar el Excel a ' + email + '?')) {
+            if (!confirm(confirmText)) {
                 e.preventDefault();
                 return false;
             }
         });
+
+        // Previsualización
+        document.getElementById('btnPrevisualizar').addEventListener('click', async function() {
+            const celulaId = document.getElementById('hdnCelulaId')?.value || '';
+            const modal = new bootstrap.Modal(document.getElementById('modalPreview'));
+
+            document.getElementById('previewLoading').style.display = 'block';
+            document.getElementById('previewContent').style.display = 'none';
+            document.getElementById('previewError').style.display = 'none';
+
+            modal.show();
+
+            try {
+                const url = `/Consultores/PrevisualizarExcel${celulaId ? '?celulaId=' + celulaId : ''}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                // Mostrar información
+                document.getElementById('previewTotalFilas').textContent = data.totalFilas;
+                document.getElementById('previewTamano').textContent = data.tamanoArchivo;
+                document.getElementById('previewFecha').textContent = data.fechaGeneracion;
+
+                // Construir tabla
+                const thead = document.querySelector('#previewTable thead');
+                const tbody = document.querySelector('#previewTable tbody');
+
+                thead.innerHTML = '<tr>' + data.columnas.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                tbody.innerHTML = data.filas.map(fila => 
+                    '<tr>' + fila.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
+                ).join('');
+
+                document.getElementById('previewLoading').style.display = 'none';
+                document.getElementById('previewContent').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('previewLoading').style.display = 'none';
+                document.getElementById('previewError').style.display = 'block';
+                document.getElementById('previewError').textContent = 'Error: ' + error.message;
+            }
+        });
     </script>
 }
+
+<style>
+    #chipsDestinatarios {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .badge .btn-close {
+        padding: 0;
+        margin-left: 8px;
+    }
+
+    #previewTable {
+        font-size: 0.85rem;
+    }
+
+    #previewTable th {
+        position: sticky;
+        top: 0;
+        background-color: #343a40;
+        color: white;
+        z-index: 10;
+    }
+</style>

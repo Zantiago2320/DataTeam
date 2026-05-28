@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace DataTeam.Models;
 
@@ -13,6 +14,12 @@ public class HistorialEnvioExcel
     [Required]
     [StringLength(255)]
     public string DestinatarioEmail { get; set; } = string.Empty;
+
+    /// <summary>
+    /// JSON array con múltiples destinatarios: ["email1@example.com", "email2@example.com"]
+    /// </summary>
+    [StringLength(4000)]
+    public string? DestinatariosJson { get; set; }
 
     [StringLength(500)]
     public string? DestinatarioNombre { get; set; }
@@ -46,6 +53,38 @@ public class HistorialEnvioExcel
 
     // Opcional: Guardar el archivo en base de datos (puede crecer mucho)
     public byte[]? ArchivoBytes { get; set; }
+
+    /// <summary>
+    /// Helper para obtener lista de destinatarios desde JSON
+    /// </summary>
+    public List<string> GetDestinatarios()
+    {
+        if (string.IsNullOrWhiteSpace(DestinatariosJson))
+        {
+            return new List<string> { DestinatarioEmail };
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(DestinatariosJson) ?? new List<string> { DestinatarioEmail };
+        }
+        catch
+        {
+            return new List<string> { DestinatarioEmail };
+        }
+    }
+
+    /// <summary>
+    /// Helper para establecer lista de destinatarios como JSON
+    /// </summary>
+    public void SetDestinatarios(List<string> destinatarios)
+    {
+        if (destinatarios != null && destinatarios.Any())
+        {
+            DestinatariosJson = JsonSerializer.Serialize(destinatarios);
+            DestinatarioEmail = destinatarios.First(); // Mantener primer email por compatibilidad
+        }
+    }
 
     [StringLength(50)]
     public string? TipoFiltro { get; set; } // "Todos", "Celula", etc.

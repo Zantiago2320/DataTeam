@@ -659,6 +659,51 @@ public class ConsultoresController : Controller
         }
     }
 
+    // API: Consultores/PrevisualizarExcel
+    [HttpGet]
+    [Authorize(Roles = AppRoles.SuperAdmin)]
+    public async Task<IActionResult> PrevisualizarExcel(int? celulaId)
+    {
+        try
+        {
+            // Generar Excel
+            byte[] excelBytes;
+            if (celulaId.HasValue && celulaId.Value > 0)
+            {
+                excelBytes = await _excelService.ExportarConsultoresPorCelulaAsync(celulaId.Value);
+            }
+            else
+            {
+                excelBytes = await _excelService.ExportarConsultoresAsync();
+            }
+
+            // Leer Excel y extraer primeras filas para previsualización
+            using var stream = new MemoryStream(excelBytes);
+            using var workbook = new ClosedXML.Excel.XLWorkbook(stream);
+            var worksheet = workbook.Worksheets.First();
+
+            var preview = new
+            {
+                TotalFilas = worksheet.RowsUsed().Count() - 1, // Menos el header
+                Columnas = worksheet.Row(1).CellsUsed().Select(c => c.Value.ToString()).ToList(),
+                Filas = worksheet.RowsUsed()
+                    .Skip(1) // Saltar header
+                    .Take(20) // Primeras 20 filas
+                    .Select(row => row.CellsUsed().Select(c => c.Value.ToString()).ToList())
+                    .ToList(),
+                TamanoArchivo = $"{excelBytes.Length / 1024} KB",
+                FechaGeneracion = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
+            };
+
+            return Json(preview);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al generar previsualización del Excel");
+            return Json(new { error = "Error al generar previsualización: " + ex.Message });
+        }
+    }
+
     // GET: Consultores/EnviarExcel
     [Authorize(Roles = AppRoles.SuperAdmin)]
     public async Task<IActionResult> EnviarExcel(int? celulaId)
@@ -679,14 +724,35 @@ public class ConsultoresController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = AppRoles.SuperAdmin)]
-    public async Task<IActionResult> EnviarExcel(string destinatarioEmail, string? destinatarioNombre, string asunto, string mensaje, int? celulaId, bool guardarArchivo = false)
+    public async Task<IActionResult> EnviarExcel(string destinatariosJson, string? destinatarioNombre, string asunto, string mensaje, int? celulaId, bool guardarArchivo = false)
     {
         try
         {
-            // SEGURIDAD: Validar email
-            if (string.IsNullOrWhiteSpace(destinatarioEmail) || !destinatarioEmail.Contains("@"))
+            // Parsear lista de destinatarios desde JSON
+            List<string> destinatarios;
+            try
             {
-                TempData["Error"] = "Debe proporcionar un correo electrónico válido";
+                destinatarios = System.Text.Json.JsonSerializer.Deserialize<List<string>>(destinatariosJson) ?? new List<string>();
+            }
+            catch
+            {
+                TempData["Error"] = "Error al procesar la lista de destinatarios";
+                return RedirectToAction(nameof(EnviarExcel), new { celulaId });
+            }
+
+            // SEGURIDAD: Validar que haya al menos un destinatario
+            if (!destinatarios.Any())
+            {
+                TempData["Error"] = "Debe proporcionar al menos un destinatario";
+                return RedirectToAction(nameof(EnviarExcel), new { celulaId });
+            }
+
+            // SEGURIDAD: Validar formato de emails
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$");
+            var emailsInvalidos = destinatarios.Where(e => !emailRegex.IsMatch(e)).ToList();
+            if (emailsInvalidos.Any())
+            {
+                TempData["Error"] = $"Emails inválidos: {string.Join(", ", emailsInvalidos)}";
                 return RedirectToAction(nameof(EnviarExcel), new { celulaId });
             }
 
@@ -709,12 +775,16 @@ public class ConsultoresController : Controller
                 tipoFiltro = "Todos";
             }
 
-            // Contar registros en el Excel (aproximación basada en consultores activos)
+            // Contar registros en el Excel
             var cantidadRegistros = celulaId.HasValue 
                 ? await _context.Consultores.CountAsync(c => c.CelulaId == celulaId.Value && !c.Eliminado)
                 : await _context.Consultores.CountAsync(c => !c.Eliminado);
 
             // Preparar cuerpo del correo
+            var destinatariosTexto = destinatarios.Count == 1 
+                ? destinatarios.First() 
+                : $"{destinatarios.Count} destinatarios";
+
             var cuerpoHtml = $@"
 <html>
 <body style='font-family: Arial, sans-serif;'>
@@ -731,31 +801,22 @@ public class ConsultoresController : Controller
 </body>
 </html>";
 
-            // Enviar correo
-            bool envioExitoso = false;
-            string? mensajeError = null;
+            // Enviar correo a múltiples destinatarios
+            bool envioExitoso = await _emailService.EnviarExcelPorCorreoMultipleAsync(
+                destinatarios,
+                asunto,
+                cuerpoHtml,
+                excelBytes,
+                fileName
+            );
 
-            try
-            {
-                await _emailService.EnviarExcelPorCorreoAsync(
-                    destinatarioEmail,
-                    asunto,
-                    cuerpoHtml,
-                    excelBytes,
-                    fileName
-                );
-                envioExitoso = true;
-            }
-            catch (Exception emailEx)
-            {
-                mensajeError = emailEx.Message;
-                _logger.LogError(emailEx, "Error al enviar correo con Excel a {Email}", destinatarioEmail);
-            }
+            string? mensajeError = envioExitoso ? null : "Error al enviar el correo. Verifique la configuración.";
 
+            // Registrar en historial
             // Registrar en historial
             var historial = new HistorialEnvioExcel
             {
-                DestinatarioEmail = destinatarioEmail,
+                DestinatarioEmail = destinatarios.First(), // Primer email por compatibilidad
                 DestinatarioNombre = destinatarioNombre,
                 Asunto = asunto,
                 Mensaje = mensaje,
@@ -768,19 +829,25 @@ public class ConsultoresController : Controller
                 MensajeError = mensajeError,
                 TipoFiltro = tipoFiltro,
                 CelulaIdFiltro = celulaId,
-                ArchivoBytes = guardarArchivo ? excelBytes : null // Solo guardar si se solicitó
+                ArchivoBytes = guardarArchivo ? excelBytes : null
             };
+
+            // Guardar lista completa de destinatarios
+            historial.SetDestinatarios(destinatarios);
 
             _context.HistorialEnviosExcel.Add(historial);
             await _context.SaveChangesAsync();
 
             if (envioExitoso)
             {
-                TempData["Success"] = $"Excel enviado exitosamente a {destinatarioEmail}";
+                var countText = destinatarios.Count == 1 
+                    ? destinatarios.First() 
+                    : $"{destinatarios.Count} destinatarios";
+                TempData["Success"] = $"✅ Excel enviado exitosamente a {countText}";
             }
             else
             {
-                TempData["Error"] = $"Error al enviar correo: {mensajeError}. El registro se guardó en el historial.";
+                TempData["Error"] = $"❌ Error al enviar correo: {mensajeError}. El registro se guardó en el historial.";
             }
 
             return RedirectToAction(nameof(HistorialEnvios));
@@ -791,9 +858,7 @@ public class ConsultoresController : Controller
             TempData["Error"] = "Error al procesar el envío del Excel";
             return RedirectToAction(nameof(EnviarExcel), new { celulaId });
         }
-    }
-
-    // GET: Consultores/HistorialEnvios
+    }    // GET: Consultores/HistorialEnvios
     [Authorize(Roles = AppRoles.SuperAdmin)]
     public async Task<IActionResult> HistorialEnvios(int? pageNumber)
     {
