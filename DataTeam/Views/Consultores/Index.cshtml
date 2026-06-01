@@ -225,7 +225,19 @@
                                                 <i class="bi bi-grid-3x3"></i> @consultor.Celula.Nombre
                                             </span>
                                         }
-                                        else
+                                        @if (consultor.CelulasMiembro?.Any() == true)
+                                        {
+                                            @foreach (var miembro in consultor.CelulasMiembro)
+                                            {
+                                                @if (miembro.CelulaId != consultor.CelulaId)
+                                                {
+                                                    <span class="badge fs-6 px-3 py-2 ms-1" style="background-color: @(miembro.Celula?.Color ?? "#6c757d"); opacity: 0.8;">
+                                                        <i class="bi bi-tag"></i> @miembro.Celula?.Nombre
+                                                    </span>
+                                                }
+                                            }
+                                        }
+                                        @if (consultor.Celula == null && consultor.CelulasMiembro?.Any() != true)
                                         {
                                             <span class="text-muted">Sin asignar</span>
                                         }

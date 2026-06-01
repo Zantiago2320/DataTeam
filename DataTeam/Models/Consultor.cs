@@ -43,18 +43,11 @@ public class Consultor
     [FechaNoPuedeSerFutura(ErrorMessage = "La fecha de nacimiento no puede ser en el futuro")]
     public DateTime FechaNacimiento { get; set; }
 
-    [Required(ErrorMessage = "La célula es obligatoria")]
     [Display(Name = "Célula")]
-    public int CelulaId { get; set; }
+    public int? CelulaId { get; set; }
 
     [ForeignKey(nameof(CelulaId))]
     public Celula? Celula { get; set; }
-
-    [Display(Name = "Equipo")]
-    public int? EquipoId { get; set; }
-
-    [ForeignKey(nameof(EquipoId))]
-    public Equipo? Equipo { get; set; }
 
     [StringLength(100)]
     public string? Rol { get; set; }
@@ -119,9 +112,6 @@ public class Consultor
 
     // Relaciones de navegación
     public ICollection<AuditoriaLog> Auditorias { get; set; } = new List<AuditoriaLog>();
-
-    [Display(Name = "Equipos que Lidera")]
-    public ICollection<EquipoLider> EquiposQueLidera { get; set; } = new List<EquipoLider>();
 
     [Display(Name = "Células que Lidera")]
     public ICollection<CelulaLider> CelulasQueLidera { get; set; } = new List<CelulaLider>();

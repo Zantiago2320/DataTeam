@@ -1,6 +1,117 @@
 @model DataTeam.ViewModels.OrganigramaViewModel
 @{
-    ViewData["Title"] = "Organigrama";
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-success fw-bold mb-0">
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>Células de Trabajo
+            </h2>
+            <p class="text-muted mb-0 small">Estructura organizacional del equipo DataTeam</p>
+        </div>
+        <div class="d-flex gap-2">
+            <div class="text-center px-3 py-2 bg-white rounded shadow-sm">
+                <div class="fw-bold fs-4 text-success">@(Model.Celulas?.Count() ?? 0)</div>
+                <div class="text-muted small">Células</div>
+            </div>
+            <div class="text-center px-3 py-2 bg-white rounded shadow-sm">
+                <div class="fw-bold fs-4 text-success">@(Model.Celulas?.Sum(c => c.Consultores.Count) ?? 0)</div>
+                <div class="text-muted small">Integrantes</div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Celulas == null || !Model.Celulas.Any())
+    {
+        <div class="alert alert-info text-center fs-5">
+            <i class="bi bi-info-circle"></i> No hay células configuradas en el sistema.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var celula in Model.Celulas)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card celula-home-card h-100 shadow-sm border-0 overflow-hidden">
+
+                        <!-- Portada -->
+                        <div class="celula-cover position-relative"
+                             style="height:160px; background: @(string.IsNullOrEmpty(celula.ImagenUrl) ? (celula.Color ?? "#28a745") : "transparent");">
+                            @if (!string.IsNullOrEmpty(celula.ImagenUrl))
+                            {
+                                <img src="@celula.ImagenUrl" alt="@celula.Nombre"
+                                     class="w-100 h-100" style="object-fit:cover;" />
+                            }
+                            <div class="position-absolute top-0 start-0 w-100 h-100"
+                                 style="background:rgba(0,0,0,0.22);"></div>
+                            <span class="position-absolute top-0 start-50 translate-middle-x mt-2 badge text-white text-uppercase"
+                                  style="background:rgba(0,0,0,0.32);font-size:.62rem;letter-spacing:2px;">
+                                CÉLULA
+                            </span>
+                            <h5 class="position-absolute bottom-0 start-0 text-white fw-bold px-3 pb-2 mb-0"
+                                style="text-shadow:0 1px 4px rgba(0,0,0,.5);">
+                                @celula.Nombre
+                            </h5>
+                        </div>
+
+                        <!-- Cuerpo -->
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(celula.Descripcion))
+                            {
+                                <p class="text-muted small mb-3">
+                                    <i class="bi bi-card-text me-1"></i>@celula.Descripcion
+                                </p>
+                            }
+
+                            <!-- Líder -->
+                            @if (!string.IsNullOrEmpty(celula.NombreLider))
+                            {
+                                <div class="d-flex align-items-center border rounded px-3 py-2 mb-3 gap-2">
+                                    <i class="bi bi-person-circle fs-5 text-muted"></i>
+                                    <span class="fw-semibold">@celula.NombreLider</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center border rounded px-3 py-2 mb-3 gap-2 text-warning">
+                                    <i class="bi bi-exclamation-circle fs-5"></i>
+                                    <span>Sin líderes asignados</span>
+                                </div>
+                            }
+
+                            <!-- Miembros -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="text-muted small mb-0">Miembros</p>
+                                    <h3 class="fw-bold mb-0">@celula.Consultores.Count</h3>
+                                </div>
+                                <span class="btn btn-info rounded-circle p-0 d-flex align-items-center justify-content-center"
+                                      style="width:40px;height:40px;pointer-events:none;">
+                                    <i class="bi bi-people-fill text-white"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-top-0 pb-3 pt-0 px-3">
+                            <span class="badge @(celula.Activa ? "bg-success" : "bg-secondary")">
+                                @(celula.Activa ? "Activa" : "Inactiva")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .celula-home-card { transition: transform .2s, box-shadow .2s; border-radius: 12px !important; }
+        .celula-home-card:hover { transform: translateY(-4px); box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.12) !important; }
+    </style>
 }
 
 <div class="container-fluid py-4">

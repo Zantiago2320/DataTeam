@@ -54,6 +54,8 @@ public class ConsultoresController : Controller
 
         var query = _context.Consultores
             .Include(c => c.Celula)
+            .Include(c => c.CelulasMiembro)
+                .ThenInclude(cm => cm.Celula)
             .AsQueryable();
 
         // Filtrar por búsqueda
@@ -68,10 +70,12 @@ public class ConsultoresController : Controller
                 c.Cargo.Contains(buscarSanitizado));
         }
 
-        // Filtrar por célula
+        // Filtrar por célula (buscar en célula principal O en células miembro)
         if (celulaId.HasValue && celulaId.Value > 0)
         {
-            query = query.Where(c => c.CelulaId == celulaId.Value);
+            query = query.Where(c => 
+                c.CelulaId == celulaId.Value || 
+                c.CelulasMiembro.Any(cm => cm.CelulaId == celulaId.Value));
         }
 
         // Filtrar por estado
@@ -287,6 +291,7 @@ public class ConsultoresController : Controller
             RutaFoto = consultor.RutaFoto,
             FechaIngreso = consultor.FechaIngreso,
             FechaNacimiento = consultor.FechaNacimiento,
+            CelulaId = consultor.CelulaId,
             Rol = consultor.Rol,
             Capacidad = consultor.Capacidad,
             Empresa = consultor.Empresa,
@@ -298,6 +303,7 @@ public class ConsultoresController : Controller
             Estado = consultor.Estado
         };
 
+        ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
         return View(viewModel);
     }
 
@@ -316,11 +322,17 @@ public class ConsultoresController : Controller
         {
             try
             {
-                var consultor = await _context.Consultores.FindAsync(id);
+                var consultor = await _context.Consultores
+                    .Include(c => c.Celula)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
                 if (consultor == null)
                 {
                     return NotFound();
                 }
+
+                // Obtener nombre de célula anterior para auditoría
+                var celulaNombreAnterior = consultor.Celula?.Nombre;
 
                 // Guardar valores anteriores para auditoría
                 var valoresAnteriores = new
@@ -329,6 +341,7 @@ public class ConsultoresController : Controller
                     consultor.Nombre,
                     consultor.Correo,
                     consultor.Cargo,
+                    Celula = celulaNombreAnterior,
                     consultor.Rol,
                     consultor.Capacidad,
                     consultor.Estado
@@ -338,6 +351,7 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Cedula == viewModel.Cedula && c.Id != id))
                 {
                     ModelState.AddModelError("Cedula", "Ya existe un consultor con esta cédula");
+                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -345,6 +359,7 @@ public class ConsultoresController : Controller
                 if (await _context.Consultores.AnyAsync(c => c.Correo == viewModel.Correo && c.Id != id))
                 {
                     ModelState.AddModelError("Correo", "Ya existe un consultor con este correo");
+                    ViewBag.Celulas = await _context.Celulas.Where(c => c.Activa).OrderBy(c => c.Nombre).ToListAsync();
                     return View(viewModel);
                 }
 
@@ -367,6 +382,7 @@ public class ConsultoresController : Controller
                 consultor.Cargo = viewModel.Cargo;
                 consultor.FechaIngreso = viewModel.FechaIngreso;
                 consultor.FechaNacimiento = viewModel.FechaNacimiento;
+                consultor.CelulaId = viewModel.CelulaId;
                 consultor.Rol = viewModel.Rol;
                 consultor.Capacidad = viewModel.Capacidad;
                 consultor.Empresa = viewModel.Empresa;
@@ -381,6 +397,11 @@ public class ConsultoresController : Controller
                 _context.Update(consultor);
                 await _context.SaveChangesAsync();
 
+                // Obtener nombre de célula nueva para auditoría
+                var celulaNombreNueva = viewModel.CelulaId.HasValue 
+                    ? (await _context.Celulas.FindAsync(viewModel.CelulaId.Value))?.Nombre
+                    : null;
+
                 // Registrar auditoría
                 await _auditoriaService.RegistrarCambioAsync(
                     "Consultor",
@@ -394,7 +415,7 @@ public class ConsultoresController : Controller
                         consultor.Nombre,
                         consultor.Correo,
                         consultor.Cargo,
-                        consultor.CelulaId,
+                        Celula = celulaNombreNueva,
                         consultor.Rol,
                         consultor.Capacidad,
                         consultor.Estado

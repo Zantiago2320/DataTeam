@@ -12,9 +12,10 @@
                     <h4 class="mb-0"><i class="bi bi-pencil me-2"></i>Editar Célula: @Model.Nombre</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Edit" method="post">
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
                         <input type="hidden" asp-for="Id" />
                         <input type="hidden" asp-for="FechaCreacion" />
+                        <input type="hidden" asp-for="ImagenUrl" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="mb-3">
@@ -32,6 +33,20 @@
                         <div class="mb-3">
                             <label asp-for="Color" class="form-label"></label>
                             <input asp-for="Color" type="color" class="form-control form-control-color" />
+                            <small class="form-text text-muted">Color de fondo cuando no hay imagen</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-image me-1"></i>Imagen / Logo de la Célula</label>
+                            @if (!string.IsNullOrEmpty(Model.ImagenUrl))
+                            {
+                                <div class="mb-2">
+                                    <img src="@Model.ImagenUrl" alt="Imagen actual" class="rounded" style="height:80px;object-fit:cover;" />
+                                    <span class="text-muted small ms-2">Imagen actual</span>
+                                </div>
+                            }
+                            <input type="file" name="imagenFile" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">Dejar vacío para mantener la imagen actual.</small>
                         </div>
 
                         <div class="mb-3">

@@ -12,11 +12,13 @@ public class CelulasController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogger<CelulasController> _logger;
+    private readonly IWebHostEnvironment _env;
 
-    public CelulasController(ApplicationDbContext context, ILogger<CelulasController> logger)
+    public CelulasController(ApplicationDbContext context, ILogger<CelulasController> logger, IWebHostEnvironment env)
     {
         _context = context;
         _logger = logger;
+        _env = env;
     }
 
     // GET: Celulas
@@ -68,13 +70,19 @@ public class CelulasController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = AppRoles.SuperAdmin)]
-    public async Task<IActionResult> Create(Celula celula, List<int>? lideresIds)
+    public async Task<IActionResult> Create(Celula celula, List<int>? lideresIds, IFormFile? imagenFile)
     {
         if (ModelState.IsValid)
         {
             try
             {
                 celula.FechaCreacion = DateTime.Now;
+
+                if (imagenFile != null && imagenFile.Length > 0)
+                {
+                    celula.ImagenUrl = await GuardarImagenAsync(imagenFile);
+                }
+
                 _context.Celulas.Add(celula);
                 await _context.SaveChangesAsync();
 
@@ -140,7 +148,7 @@ public class CelulasController : Controller
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Roles = AppRoles.SuperAdmin)]
-    public async Task<IActionResult> Edit(int id, Celula celula, List<int>? lideresIds)
+    public async Task<IActionResult> Edit(int id, Celula celula, List<int>? lideresIds, IFormFile? imagenFile)
     {
         if (id != celula.Id)
         {
@@ -165,6 +173,11 @@ public class CelulasController : Controller
                 celulaExistente.Color = celula.Color;
                 celulaExistente.Activa = celula.Activa;
                 celulaExistente.FechaModificacion = DateTime.Now;
+
+                if (imagenFile != null && imagenFile.Length > 0)
+                {
+                    celulaExistente.ImagenUrl = await GuardarImagenAsync(imagenFile);
+                }
 
                 // Actualizar líderes si se proporcionaron
                 if (lideresIds != null)
@@ -406,6 +419,18 @@ public class CelulasController : Controller
         }
 
         return RedirectToAction(nameof(Details), new { id = celulaId });
+    }
+
+    private async Task<string> GuardarImagenAsync(IFormFile file)
+    {
+        var uploadsPath = Path.Combine(_env.WebRootPath, "images", "celulas");
+        Directory.CreateDirectory(uploadsPath);
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var fileName = $"celula_{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(uploadsPath, fileName);
+        using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+        return $"/images/celulas/{fileName}";
     }
 
     private bool CelulaExists(int id)

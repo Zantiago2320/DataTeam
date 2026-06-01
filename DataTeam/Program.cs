@@ -80,7 +80,6 @@ builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ICsvService, CsvService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IEquipoService, EquipoService>();
 builder.Services.AddScoped<CumpleanosJob>();
 builder.Services.AddScoped<ReporteMensualJob>();
 builder.Services.AddScoped<DbInitializerService>(); // Servicio de inicialización

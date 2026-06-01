@@ -69,6 +69,9 @@ public class ConsultorViewModel
     [Display(Name = "Estado")]
     public EstadoConsultor Estado { get; set; } = EstadoConsultor.Activo;
 
+    [Display(Name = "Célula")]
+    public int? CelulaId { get; set; }
+
     [Display(Name = "Edad")]
     public int Edad => DateTime.Today.Year - FechaNacimiento.Year - 
         (DateTime.Today.DayOfYear < FechaNacimiento.DayOfYear ? 1 : 0);

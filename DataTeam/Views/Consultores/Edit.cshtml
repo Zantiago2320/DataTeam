@@ -76,6 +76,40 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="CelulaId" class="form-label"></label>
+                                <select asp-for="CelulaId" class="form-select">
+                                    <option value="">Sin asignar</option>
+                                    @foreach (var celula in ViewBag.Celulas as List<DataTeam.Models.Celula>)
+                                    {
+                                        <option value="@celula.Id">@celula.Nombre</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="CelulaId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Rol" class="form-label"></label>
+                                <input asp-for="Rol" class="form-control" />
+                                <span asp-validation-for="Rol" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label asp-for="Capacidad" class="form-label"></label>
+                                <input asp-for="Capacidad" class="form-control" type="number" min="0" max="100" />
+                                <span asp-validation-for="Capacidad" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label asp-for="Estado" class="form-label"></label>
+                                <select asp-for="Estado" class="form-select" asp-items="Html.GetEnumSelectList<DataTeam.Models.EstadoConsultor>()"></select>
+                                <span asp-validation-for="Estado" class="text-danger"></span>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             @if (!string.IsNullOrEmpty(Model.RutaFoto))
                             {

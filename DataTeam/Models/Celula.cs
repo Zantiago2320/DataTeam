@@ -20,6 +20,10 @@ public class Celula
     [Display(Name = "Color")]
     public string? Color { get; set; }
 
+    [StringLength(500)]
+    [Display(Name = "Imagen / Logo")]
+    public string? ImagenUrl { get; set; }
+
     [Display(Name = "Activa")]
     public bool Activa { get; set; } = true;
 

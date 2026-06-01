@@ -27,7 +27,6 @@ public class DiagnosticoController : Controller
             ConsultoresEliminados = await _context.Consultores.Where(c => c.Eliminado).CountAsync(),
             TotalCelulas = await _context.Celulas.CountAsync(),
             CelulasActivas = await _context.Celulas.Where(c => c.Activa).CountAsync(),
-            TotalEquipos = await _context.Equipos.CountAsync(),
             TotalUsuarios = await _context.Users.CountAsync(),
             DistribucionPorCelula = await _context.Consultores
                 .Where(c => !c.Eliminado)
@@ -61,11 +60,9 @@ public class DiagnosticoController : Controller
         {
             // Limpiar todas las tablas
             _context.Consultores.RemoveRange(_context.Consultores);
-            _context.Celulas.RemoveRange(_context.Celulas);
-            _context.Equipos.RemoveRange(_context.Equipos);
             _context.CelulaLideres.RemoveRange(_context.CelulaLideres);
-            _context.EquipoLideres.RemoveRange(_context.EquipoLideres);
-            _context.EquipoMiembros.RemoveRange(_context.EquipoMiembros);
+            _context.CelulaMiembros.RemoveRange(_context.CelulaMiembros);
+            _context.Celulas.RemoveRange(_context.Celulas);
 
             await _context.SaveChangesAsync();
 

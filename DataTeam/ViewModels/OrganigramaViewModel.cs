@@ -13,7 +13,9 @@ public class CelulaConConsultores
     public string Nombre { get; set; } = string.Empty;
     public string? Descripcion { get; set; }
     public string? Color { get; set; }
+    public string? ImagenUrl { get; set; }
     public string? NombreLider { get; set; }
+    public bool Activa { get; set; } = true;
     public List<ConsultorResumen> Consultores { get; set; } = new();
 }
 

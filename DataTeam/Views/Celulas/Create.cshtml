@@ -11,7 +11,7 @@
                     <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Crear Nueva Célula</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
                         <div class="mb-3">
@@ -29,7 +29,13 @@
                         <div class="mb-3">
                             <label asp-for="Color" class="form-label"></label>
                             <input asp-for="Color" type="color" class="form-control form-control-color" value="#17a2b8" />
-                            <small class="form-text text-muted">Color para identificar la célula en el organigrama</small>
+                            <small class="form-text text-muted">Color de fondo cuando no hay imagen</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-image me-1"></i>Imagen / Logo de la Célula</label>
+                            <input type="file" name="imagenFile" class="form-control" accept="image/*" />
+                            <small class="form-text text-muted">Formatos: JPG, PNG, GIF, WEBP. Se mostrará como portada de la tarjeta.</small>
                         </div>
 
                         <div class="mb-3">

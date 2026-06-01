@@ -8,11 +8,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 {
     public DbSet<Consultor> Consultores { get; set; }
     public DbSet<Celula> Celulas { get; set; }
-    public DbSet<Equipo> Equipos { get; set; }
-    public DbSet<EquipoLider> EquipoLideres { get; set; }
     public DbSet<CelulaLider> CelulaLideres { get; set; }
-    public DbSet<CelulaMiembro> CelulaMiembros { get; set; } // Nueva tabla para asignaciones de miembros con roles
-    public DbSet<EquipoMiembro> EquipoMiembros { get; set; } // Nueva tabla para asignaciones múltiples
+    public DbSet<CelulaMiembro> CelulaMiembros { get; set; }
     public DbSet<AuditoriaLog> AuditoriaLogs { get; set; }
     public DbSet<ProcesoContratacion> ProcesosContratacion { get; set; }
     public DbSet<ActividadAdmin> ActividadesAdmin { get; set; }
@@ -68,27 +65,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasForeignKey(c => c.CelulaId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Configurar relación Consultor-Equipo (opcional)
-        modelBuilder.Entity<Consultor>()
-            .HasOne(c => c.Equipo)
-            .WithMany(e => e.Consultores)
-            .HasForeignKey(c => c.EquipoId)
-            .OnDelete(DeleteBehavior.SetNull);
-
-        // Configurar relación EquipoLider (many-to-many entre Equipo y Consultor)
-        modelBuilder.Entity<EquipoLider>()
-            .HasOne(el => el.Equipo)
-            .WithMany(e => e.EquipoLideres)
-            .HasForeignKey(el => el.EquipoId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<EquipoLider>()
-            .HasOne(el => el.Consultor)
-            .WithMany(c => c.EquiposQueLidera)
-            .HasForeignKey(el => el.ConsultorId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Configurar relación CelulaLider (many-to-many entre Celula y Consultor)
+        // Configurar relación CelulaLider
         modelBuilder.Entity<CelulaLider>()
             .HasOne(cl => cl.Celula)
             .WithMany(c => c.CelulaLideres)
@@ -100,24 +77,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .WithMany(c => c.CelulasQueLidera)
             .HasForeignKey(cl => cl.ConsultorId)
             .OnDelete(DeleteBehavior.Restrict);
-
-        // Configurar relación EquipoMiembro (many-to-many con % participación)
-        modelBuilder.Entity<EquipoMiembro>()
-            .HasOne(em => em.Equipo)
-            .WithMany()
-            .HasForeignKey(em => em.EquipoId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<EquipoMiembro>()
-            .HasOne(em => em.Consultor)
-            .WithMany()
-            .HasForeignKey(em => em.ConsultorId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Índice único para evitar duplicados en EquipoMiembro
-        modelBuilder.Entity<EquipoMiembro>()
-            .HasIndex(em => new { em.EquipoId, em.ConsultorId })
-            .IsUnique();
 
         // Configurar relación AuditoriaLog-Consultor
         modelBuilder.Entity<AuditoriaLog>()
@@ -131,9 +90,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             new Celula { Id = 1, Nombre = "Sin Asignar", Descripcion = "Célula por defecto", Color = "#808080", FechaCreacion = DateTime.Now }
         );
 
-        modelBuilder.Entity<Equipo>().HasData(
-            new Equipo { Id = 1, Nombre = "Sin Asignar", Descripcion = "Equipo por defecto", Color = "#808080", FechaCreacion = DateTime.Now }
-        );
-    }
+        }
 }
 

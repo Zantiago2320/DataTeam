@@ -39,7 +39,9 @@ public class OrganigramaController : Controller
                 Id = celula.Id,
                 Nombre = celula.Nombre,
                 Descripcion = celula.Descripcion,
-                Color = celula.Color ?? "#3498db"
+                Color = celula.Color ?? "#3498db",
+                ImagenUrl = celula.ImagenUrl,
+                Activa = celula.Activa
             };
 
             // Buscar líder principal si existe
